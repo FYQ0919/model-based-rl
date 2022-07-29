@@ -133,7 +133,7 @@ def make_config():
   self_play = parser.add_argument_group('self play')
   self_play.add_argument('--num_actors', nargs='+', type=int, default=[7])
   self_play.add_argument('--max_steps', type=int, default=40000)
-  self_play.add_argument('--num_simulations', nargs='+', type=int, default=[30])
+  self_play.add_argument('--num_simulations', nargs='+', type=int, default=[36])
   self_play.add_argument('--max_history_length', type=int, default=500)
   self_play.add_argument('--visit_softmax_temperatures', nargs=2, type=float, default=[1.0, 0.5, 0.25])
   self_play.add_argument('--visit_softmax_steps', nargs=2, type=int, default=[15e3, 30e3])
@@ -179,6 +179,11 @@ def make_config():
   training.add_argument('--learner_gpu_device_id', type=int, default=None)
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
+  ### Sampled Muzero
+  training.add_argument('--num_sample_action', type=int, default=0)
+
+
+
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
   training.add_argument('--momentum', type=float, default=0.9)
@@ -204,6 +209,9 @@ def make_config():
   logging.add_argument('--actor_log_frequency', type=int, default=1)
   logging.add_argument('--learner_log_frequency', type=int, default=100)
   logging.add_argument('--frames_before_fps_log', type=int, default=10000)
+
+
+
 
   ### Debugging
   debug = parser.add_argument_group('debugging')

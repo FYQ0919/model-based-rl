@@ -44,15 +44,44 @@ class Node(object):
       return 0
     return self.value_sum / self.visit_count
 
-  def expand(self, network_output, to_play, actions):
+  def expand(self, network_output, to_play, actions, config):
     self.to_play = to_play
     self.hidden_state = network_output.hidden_state
+
     if network_output.reward:
       self.reward = network_output.reward.item()
-    policy = {a: math.exp(network_output.policy_logits[0][a].item()) for a in actions}
-    policy_sum = sum(policy.values())
-    for action, p in policy.items():
-      self.children[action] = Node(p / policy_sum)
+
+    sample_num = config.num_sample_action
+
+    policy_logits = network_output.policy_logits
+
+    policy_values = torch.softmax(
+      torch.tensor([policy_logits[0][a].item() for a in actions]), dim=0
+    ).numpy().astype('float64')
+
+    policy_values /= policy_values.sum()
+
+
+    if sample_num > 0:
+      if len(actions) > sample_num:
+        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
+      else:
+        sample_action = actions
+
+      sample_policy_values = torch.softmax(
+        torch.tensor([policy_logits[0][a] for a in sample_action]), dim=0
+      ).numpy().astype('float64')
+
+      for i in range(len(sample_action)):
+        a = sample_action[i]
+        p = sample_policy_values[i]
+        self.children[a] = Node(p)
+    else:
+      policy = {a: policy_values[i] for i, a in enumerate(actions)}
+
+      for action, p in policy.items():
+        self.children[action] = Node(p)
+
 
   def add_exploration_noise(self, dirichlet_alpha, frac):
     actions = list(self.children.keys())
@@ -65,6 +94,7 @@ class MCTS(object):
 
   def __init__(self, config):
     self.num_simulations = config.num_simulations
+    self.config = config
     self.discount = config.discount
     self.pb_c_base = config.pb_c_base
     self.pb_c_init = config.pb_c_init
@@ -94,7 +124,7 @@ class MCTS(object):
       parent = search_path[-2]
 
       network_output = network.recurrent_inference(parent.hidden_state, [action])
-      node.expand(network_output, to_play, self.action_space)
+      node.expand(network_output, to_play, self.action_space, self.config)
 
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
