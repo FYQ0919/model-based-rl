@@ -176,7 +176,7 @@ def make_config():
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
   training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default='')
-  training.add_argument('--learner_gpu_device_id', type=int, default=None)
+  training.add_argument('--learner_gpu_device_id', type=int, default=0)
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
   ### Sampled Muzero
@@ -184,6 +184,10 @@ def make_config():
 
   ### IBS
   training.add_argument('--max_r', type=int, default=1)
+
+  ### Abstract Representation
+  training.add_argument('--abstract_loss_weight', type=float, default=10.)
+  training.add_argument('--max_transitive_error', type=float, default=0.05)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')

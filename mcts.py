@@ -35,6 +35,10 @@ class Node(object):
     self.children = {}
     self.prior = prior
     self.to_play = 1
+    self.Q_loss = 0
+    self.aggregation_times = 0
+    self.abstract_loss = 0
+    self.Q = 0
 
   def expanded(self):
     return len(self.children) > 0
@@ -44,7 +48,7 @@ class Node(object):
       return 0
     return self.value_sum / self.visit_count
 
-  def expand(self, network_output, to_play, actions, config):
+  def expand(self, network_output, to_play, actions, config, model):
     self.to_play = to_play
     self.hidden_state = network_output.hidden_state
 
@@ -87,6 +91,47 @@ class Node(object):
       sample_policy_values = torch.softmax(
         torch.tensor([policy_logits[0][a] for a in sample_action]), dim=0
       ).numpy().astype('float64')
+
+      step_error = config.max_transitive_error / config.num_sample_action
+      Abstract_node = {}
+      aggregation_times = 0
+
+      for i in range(len(sample_action)):
+        action = sample_action[i]
+        p = sample_policy_values[i]
+
+        abstract_representation, predict_Q = model.abstract_embed(self.hidden_state,
+                                                                  torch.tensor([action]).to(self.hidden_state.device))
+
+
+        predict_Q = predict_Q.item()
+
+        for a, abstract in Abstract_node.items():
+          abstract_r, abstract_Q, p = abstract[0], abstract[1], abstract[2]
+
+          if abs(predict_Q - abstract_Q) < step_error:
+            aggregation_times += 1
+            previous_loss = abstract[3]
+            abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r, abstract_representation)) + \
+                            torch.norm(abstract_r - abstract_representation) + previous_loss
+
+            if predict_Q > abstract_Q:
+              Abstract_node[action] = [abstract_representation, predict_Q, p, abstract_loss]
+              Abstract_node.pop(a)
+            else:
+              Abstract_node[a][-1] = abstract_loss
+            break
+        if action not in Abstract_node.keys():
+          Abstract_node[action] = [abstract_representation, predict_Q, p, 0]
+
+      if self.aggregation_times < aggregation_times:
+        self.aggregation_times = aggregation_times
+
+      for action, abstract in Abstract_node.items():
+        self.children[action] = Node(abstract[2])
+        self.children[action].hidden_state = abstract[0]
+        self.children[action].Q = abstract[1]
+        self.children[action].abstract_loss = abstract[3]
 
       for i in range(len(sample_action)):
         a = sample_action[i]
@@ -141,11 +186,12 @@ class MCTS(object):
       parent = search_path[-2]
 
       network_output = network.recurrent_inference(parent.hidden_state, [action])
-      node.expand(network_output, to_play, self.action_space, self.config)
+      node.expand(network_output, to_play, self.action_space, self.config, network)
 
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
       search_paths.append(search_path)
+
     return search_paths
 
   def select_child(self, node):
@@ -166,11 +212,15 @@ class MCTS(object):
     if child.visit_count > 0:
       value = -child.value() if self.two_players else child.value()
       value_score = self.min_max_stats.normalize(child.reward + self.discount*value)
+
     else:
       value_score = self.init_value_score
+
+
     return prior_score + value_score
 
   def backpropagate(self, search_path, value, to_play):
+
     for idx, node in enumerate(reversed(search_path)):
       node.value_sum += value if node.to_play == to_play else -value
       node.visit_count += 1
@@ -188,5 +238,6 @@ class MCTS(object):
         self.min_max_stats.update(new_q)
 
       value = reward + self.discount*value
+
 
 

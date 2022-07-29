@@ -45,7 +45,7 @@ class Learner(Logger):
     self.scalar_loss_fn, self.policy_loss_fn = get_loss_functions(config)
 
     self.training_step = 0
-    self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0.}
+    self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0., 'abstract': 0., 'aggregation_times': 0.}
 
     self.throughput = {'total_frames': 0, 'total_games': 0, 'training_step': 0, 'time': {'ups': 0, 'fps': 0}}
 
@@ -139,14 +139,20 @@ class Learner(Logger):
           reward_loss = self.losses_to_log['reward'] / self.config.learner_log_frequency
           value_loss = self.losses_to_log['value'] / self.config.learner_log_frequency
           policy_loss = self.losses_to_log['policy'] / self.config.learner_log_frequency
+          abstract_loss = self.losses_to_log['abstract'] / self.config.learner_log_frequency
+          aggregation_times = self.losses_to_log['aggregation_times'] / self.config.learner_log_frequency
 
           self.losses_to_log['reward'] = 0
           self.losses_to_log['value'] = 0
           self.losses_to_log['policy'] = 0
+          self.losses_to_log['abstract_loss'] = 0
+          self.losses_to_log['aggregation_times'] = 0
 
           self.log_scalar(tag='loss/reward', value=reward_loss, i=self.training_step)
           self.log_scalar(tag='loss/value', value=value_loss, i=self.training_step)
           self.log_scalar(tag='loss/policy', value=policy_loss, i=self.training_step)
+          self.log_scalar(tag='loss/abstract_loss', value=abstract_loss, i=self.training_step)
+          self.log_scalar(tag='loss/aggregation_times', value=aggregation_times, i=self.training_step)
           self.log_throughput()
 
           if self.lr_scheduler is not None:
@@ -163,7 +169,7 @@ class Learner(Logger):
 
   def update_weights(self, batch):
     batch, idxs, is_weights = batch
-    observations, actions, targets = batch
+    observations, actions, targets, abstarct_loss_batch, aggregation_times_batch = batch
 
     target_rewards, target_values, target_policies = targets
 
@@ -194,8 +200,54 @@ class Learner(Logger):
     reward_loss = 0
     value_loss = self.scalar_loss_fn(value.squeeze(), target_values[:, 0])
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
+    abstract_loss = 0
+
+    aggregation_times = 0
+
+    for k in aggregation_times_batch:
+      aggregation_times += np.mean(k)
+    aggregation_times /= len(aggregation_times_batch)
+
+    step_error = self.config.max_transitive_error / self.config.num_sample_action
+    Abstract_node = {}
+    aggregation_times = 0
+    action_space = np.array(self.config.action_space)
+    sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
+    node_aggregation_times = 0
+
+    for i in range(len(sample_action)):
+      action = sample_action[i]
+
+      abstract_representation, predict_Q = self.network.abstract_embed(self.hidden_state,
+                                                                torch.tensor([action]).to(self.hidden_state.device))
+
+      predict_Q = predict_Q.item()
+
+      for a, abstract in Abstract_node.items():
+        abstract_r, abstract_Q  = abstract[0], abstract[1]
+
+        if abs(predict_Q - abstract_Q) < step_error:
+
+          node_aggregation_times += 1
+          node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r, abstract_representation)) + \
+                          torch.norm(abstract_r - abstract_representation)
+          abstract_loss += node_abstract_loss
+
+
+
+          if predict_Q > abstract_Q:
+            Abstract_node[action] = [abstract_representation, predict_Q, abstract_loss]
+            Abstract_node.pop(a)
+          else:
+            Abstract_node[a][-1] = abstract_loss
+          break
+      if action not in Abstract_node.keys():
+        Abstract_node[action] = [abstract_representation, predict_Q, 0]
+
+    abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
 
     for i, action in enumerate(zip(*actions), 1):
+      hidden_state, predict_Q = self.network.abstract_embed(hidden_state, action)
       value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
       hidden_state.register_hook(lambda grad: grad * 0.5)
 
@@ -205,11 +257,13 @@ class Learner(Logger):
       
       policy_loss += self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, i])
 
+
     reward_loss = (is_weights * reward_loss).mean()
     value_loss = (is_weights * value_loss).mean()
     policy_loss = (is_weights * policy_loss).mean()
+    abstract_loss = (is_weights * abstract_loss).mean()
 
-    full_weighted_loss = reward_loss + value_loss + policy_loss
+    full_weighted_loss = reward_loss + value_loss + policy_loss + self.config.abstarct_loss_weight * abstract_loss
 
     full_weighted_loss.register_hook(lambda grad: grad * (1/self.config.num_unroll_steps))
 
@@ -228,6 +282,8 @@ class Learner(Logger):
     self.losses_to_log['reward'] += reward_loss.detach().cpu().item()
     self.losses_to_log['value'] += value_loss.detach().cpu().item()
     self.losses_to_log['policy'] += policy_loss.detach().cpu().item()
+    self.losses_to_log['abstract'] += abstract_loss.detach().cpu().item()
+    self.losses_to_log['aggregation_times'] += aggregation_times
 
   def launch(self):
     print("Learner is online on {}.".format(self.device))

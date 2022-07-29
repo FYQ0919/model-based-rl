@@ -13,6 +13,7 @@ class HistorySlice(NamedTuple):
   steps: list
   env_states: list
   to_play: list
+  aggregation_times: list
 
 
 class History():
@@ -26,7 +27,9 @@ class History():
                      dones: list,
                      steps: list,
                      env_states: list,
-                     to_play: list):
+                     to_play: list,
+                     aggregation_times: list):
+
     self.observations = observations
     self.child_visits = child_visits
     self.root_values = root_values
@@ -37,6 +40,7 @@ class History():
     self.steps = steps
     self.env_states = env_states
     self.to_play = to_play
+    self.aggregation_times = aggregation_times
 
   def get_slice(self, collect_from):
     return HistorySlice(self.observations[collect_from:],
@@ -48,7 +52,9 @@ class History():
                         self.dones[collect_from:],
                         self.steps[collect_from:],
                         self.env_states[collect_from:],
-                        self.to_play[collect_from:])
+                        self.to_play[collect_from:],
+                        self.aggregation_times[collect_from:])
+
 
 
 class Game(object):
@@ -63,7 +69,7 @@ class Game(object):
 
     self.environment = environment
 
-    self.history = History([], [], [], [], [], [], [], [], [], [])
+    self.history = History([], [], [], [], [], [], [], [], [], [], [])
 
     self.terminal, self.done = False, False
     self.previous_collect_to = 0
@@ -110,6 +116,7 @@ class Game(object):
       for a in self.action_space])
     value = root.value()
     self.history.root_values.append(value)
+    self.history.aggregation_times.append(root.aggregation_times)
     self.sum_values += value
     if value > self.max_value:
       self.max_value = value

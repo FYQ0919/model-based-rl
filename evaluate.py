@@ -269,7 +269,7 @@ class Evaluator(SummaryTools):
       initial_inference = self.network.initial_inference(current_observation.unsqueeze(0))
       
       legal_actions = game.environment.legal_actions()
-      root.expand(initial_inference, game.to_play, legal_actions)
+      root.expand(initial_inference, game.to_play, legal_actions, self.config, self.network)
 
       if self.config.use_exploration_noise:
         root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)

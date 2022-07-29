@@ -28,6 +28,9 @@ class BaseNetwork(nn.Module):
     policy_logits, value = self.prediction(hidden_state)
     return NetworkOutput(value, 0, policy_logits, hidden_state)
 
+  def abstract_embed(self, hidden_state, action):
+    raise NotImplementedError
+
   def recurrent_inference(self, hidden_state, action):
     hidden_state, reward = self.dynamics(hidden_state, action)
     policy_logits, value = self.prediction(hidden_state)
@@ -138,7 +141,9 @@ class FCNetwork(BaseNetwork):
     self.value_head = FCPredictionValue(input_dim, value_out, hidden_dim)
     self.policy_head = FCPredictionPolicy(input_dim, action_space, hidden_dim)
     self.reward_head = FCDynamicsReward(input_dim, action_space, reward_out, hidden_dim)
+    self.Q_head = FCDynamicsReward(input_dim, action_space, reward_out, hidden_dim)
     self.transition_head = FCDynamicsState(input_dim, action_space, hidden_dim)
+    self.abstract_head = FCDynamicsState(input_dim, action_space, hidden_dim)
     self.to(device)
 
     self.LN = nn.LayerNorm([hidden_dim], elementwise_affine=True)
@@ -163,6 +168,16 @@ class FCNetwork(BaseNetwork):
     next_hidden_state = self.transition_head(hidden_state_with_action)
     next_hidden_state = F.relu(self.LN(next_hidden_state))
     return next_hidden_state, reward
+
+  def abstract_embed(self, hidden_state, action):
+
+    hidden_state_with_action = self.attach_action(hidden_state, action)
+    predict_Q = torch.tanh(self.Q_head(hidden_state_with_action))
+    if not self.training and not self.no_support:
+      predict_Q = self.inverse_reward_transform(predict_Q)
+    next_hidden_state = self.abstract_head(hidden_state_with_action)
+    next_hidden_state = F.relu(self.LN(next_hidden_state))
+    return next_hidden_state, predict_Q
 
   def attach_action(self, hidden_state, action):
     batch_size = np.shape(action)[0]
