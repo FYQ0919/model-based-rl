@@ -48,6 +48,8 @@ class Node(object):
     self.to_play = to_play
     self.hidden_state = network_output.hidden_state
 
+    actions = np.array(actions)
+
     if network_output.reward:
       self.reward = network_output.reward.item()
 
@@ -61,10 +63,24 @@ class Node(object):
 
     policy_values /= policy_values.sum()
 
+    regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
+    v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
+    alpha = np.linspace(0, 1, 1000)
+    ratio_min = 1e9
+    best_a = 0
+
+    for a_ in alpha:
+      policy = a_ * np.ones(actions.shape) / len(actions) + (1 - a_) * policy_values
+      ratio = (np.dot(policy, regret) ** 2 / (np.dot(policy, v_a)))
+      if ratio < ratio_min:
+        best_a = a_
+        ratio_min = ratio
+    best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
 
     if sample_num > 0:
+
       if len(actions) > sample_num:
-        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
+        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
       else:
         sample_action = actions
 
@@ -76,6 +92,7 @@ class Node(object):
         a = sample_action[i]
         p = sample_policy_values[i]
         self.children[a] = Node(p)
+
     else:
       policy = {a: policy_values[i] for i, a in enumerate(actions)}
 

@@ -182,7 +182,8 @@ def make_config():
   ### Sampled Muzero
   training.add_argument('--num_sample_action', type=int, default=0)
 
-
+  ### IBS
+  training.add_argument('--max_r', type=int, default=1)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
