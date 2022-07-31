@@ -47,6 +47,7 @@ class Node(object):
   def expand(self, network_output, to_play, actions, config):
     self.to_play = to_play
     self.hidden_state = network_output.hidden_state
+    actions = np.array(actions)
 
     if network_output.reward:
       self.reward = network_output.reward.item()
@@ -60,6 +61,8 @@ class Node(object):
     ).numpy().astype('float64')
 
     policy_values /= policy_values.sum()
+
+    policy_values = 0.999 * policy_values + 1e-3 * np.ones(actions.shape) / len(actions)
 
 
     if sample_num > 0:

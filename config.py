@@ -153,7 +153,7 @@ def make_config():
 
   ### Prioritized Replay Buffer
   per = parser.add_argument_group('prioritized experience replay')
-  per.add_argument('--window_size', nargs='+', type=int, default=[100000])
+  per.add_argument('--window_size', nargs='+', type=int, default=[10000])
   per.add_argument('--window_step', nargs='+', type=int, default=[None])
   per.add_argument('--epsilon', type=float, default=0.01)
   per.add_argument('--alpha', type=float, default=1.)
@@ -162,16 +162,16 @@ def make_config():
 
   ### Training
   training = parser.add_argument_group('training')
-  training.add_argument('--training_steps', type=int, default=100000000)
+  training.add_argument('--training_steps', type=int, default=10000000)
   training.add_argument('--policy_loss', type=str, default='CrossEntropyLoss')
   training.add_argument('--scalar_loss', type=str, default='MSE')
   training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[5])
   training.add_argument('--send_weights_frequency', type=int, default=500)
   training.add_argument('--weight_sync_frequency', type=int, default=1000)
   training.add_argument('--td_steps', nargs='+', type=int, default=[10])
-  training.add_argument('--batch_size', nargs='+', type=int, default=[256])
+  training.add_argument('--batch_size', nargs='+', type=int, default=[64])
   training.add_argument('--batches_per_fetch', type=int, default=15)
-  training.add_argument('--stored_before_train', type=int, default=50000)
+  training.add_argument('--stored_before_train', type=int, default=10)
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
@@ -181,8 +181,6 @@ def make_config():
 
   ### Sampled Muzero
   training.add_argument('--num_sample_action', type=int, default=0)
-
-
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
@@ -210,13 +208,9 @@ def make_config():
   logging.add_argument('--learner_log_frequency', type=int, default=100)
   logging.add_argument('--frames_before_fps_log', type=int, default=10000)
 
-
-
-
   ### Debugging
   debug = parser.add_argument_group('debugging')
   debug.add_argument('--debug', action='store_true')
-
 
   args = parser.parse_args()
 
