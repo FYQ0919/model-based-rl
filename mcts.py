@@ -64,26 +64,25 @@ class Node(object):
 
     policy_values /= policy_values.sum()
 
-    import datetime
-    s = datetime.datetime.now()
-    regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
-    v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-    alpha = np.linspace(1e-3, 1, 100)
-    ratio_min = 1e9
-    best_a = 0
-
-    for a_ in alpha:
-      policy = a_ * np.ones(actions.shape) / len(actions) + (1 - a_) * policy_values
-      ratio = (np.dot(policy, regret) ** 2 / (np.dot(policy, v_a)))
-      if ratio < ratio_min:
-        best_a = a_
-        ratio_min = ratio
-    best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
-
-    e = datetime.datetime.now()
-    print(f'IBS time: {(e-s).microseconds}')
-
     if sample_num > 0:
+
+      s = datetime.datetime.now()
+      regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
+      v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
+      alpha = np.linspace(1e-3, 1, 100)
+      ratio_min = 1e9
+      best_a = 0
+
+      for a_ in alpha:
+        policy = a_ * np.ones(actions.shape) / len(actions) + (1 - a_) * policy_values
+        ratio = (np.dot(policy, regret) ** 2 / (np.dot(policy, v_a)))
+        if ratio < ratio_min:
+          best_a = a_
+          ratio_min = ratio
+      best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
+
+      e = datetime.datetime.now()
+      print(f'IBS time: {(e - s).microseconds}')
 
       if len(actions) > sample_num:
         sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
@@ -111,20 +110,16 @@ class Node(object):
 
         reward = reward.item()
 
-        for a, abstract in Abstract_node.items():
-          abstract_r, abstract_V, p = abstract[0], abstract[1], abstract[2]
+        Abstract_node[action] = [abstract_representation, predict_V, p, reward]
 
-          if abs(predict_V - abstract_V) < step_error * (predict_V + abstract_V) / 2:
-            aggregation_times += 1
+      sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
 
-            if predict_V > abstract_V:
-              Abstract_node[action] = [abstract_representation, predict_V, p, reward]
-              Abstract_node.pop(a)
-
-
-            break
-        if action not in Abstract_node.keys():
-          Abstract_node[action] = [abstract_representation, predict_V, p, reward]
+      for k in range(len(sorted_Abstract_node)-1):
+        a1, v1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1]
+        a2, v2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1]
+        if abs(v2 - v1) < step_error * (v1 + v2) / 2:
+          aggregation_times += 1
+          Abstract_node.pop(a1)
 
       if self.aggregation_times < aggregation_times:
         self.aggregation_times = aggregation_times
