@@ -65,7 +65,7 @@ class Node(object):
 
     regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
     v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-    alpha = np.linspace(0, 1, 1000)
+    alpha = np.linspace(1e-3, 1, 1000)
     ratio_min = 1e9
     best_a = 0
 

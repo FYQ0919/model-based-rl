@@ -169,15 +169,15 @@ class Learner(Logger):
 
     if self.config.norm_obs:
       observations = (observations - self.obs_min) / self.obs_range
-    observations = torch.from_numpy(observations).to(self.device)
+    observations = torch.tensor(observations).to(self.device)
 
     value, reward, policy_logits, hidden_state = self.network.initial_inference(observations)
 
     with torch.no_grad():
-      target_policies = torch.from_numpy(target_policies).to(self.device)
-      target_values = torch.from_numpy(target_values).to(self.device)
-      target_rewards = torch.from_numpy(target_rewards).to(self.device)
-      is_weights = torch.from_numpy(is_weights).to(self.device)
+      target_policies = torch.tensor(target_policies).to(self.device)
+      target_values = torch.tensor(target_values).to(self.device)
+      target_rewards = torch.tensor(target_rewards).to(self.device)
+      is_weights = torch.tensor(is_weights).to(self.device)
 
       init_value = self.config.inverse_value_transform(value) if not self.config.no_support else value
       new_errors = (init_value.squeeze() - target_values[:, 0]).cpu().numpy()
