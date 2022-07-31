@@ -131,7 +131,7 @@ def make_config():
 
   ### Self-Play
   self_play = parser.add_argument_group('self play')
-  self_play.add_argument('--num_actors', nargs='+', type=int, default=[7])
+  self_play.add_argument('--num_actors', nargs='+', type=int, default=[5])
   self_play.add_argument('--max_steps', type=int, default=40000)
   self_play.add_argument('--num_simulations', nargs='+', type=int, default=[36])
   self_play.add_argument('--max_history_length', type=int, default=500)
@@ -169,9 +169,9 @@ def make_config():
   training.add_argument('--send_weights_frequency', type=int, default=500)
   training.add_argument('--weight_sync_frequency', type=int, default=1000)
   training.add_argument('--td_steps', nargs='+', type=int, default=[10])
-  training.add_argument('--batch_size', nargs='+', type=int, default=[256])
+  training.add_argument('--batch_size', nargs='+', type=int, default=[16])
   training.add_argument('--batches_per_fetch', type=int, default=15)
-  training.add_argument('--stored_before_train', type=int, default=50000)
+  training.add_argument('--stored_before_train', type=int, default=1000)
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
@@ -180,14 +180,14 @@ def make_config():
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
   ### Sampled Muzero
-  training.add_argument('--num_sample_action', type=int, default=0)
+  training.add_argument('--num_sample_action', type=int, default=10)
 
   ### IBS
   training.add_argument('--max_r', type=int, default=1)
 
   ### Abstract Representation
   training.add_argument('--abstract_loss_weight', type=float, default=10.)
-  training.add_argument('--max_transitive_error', type=float, default=0.05)
+  training.add_argument('--max_transitive_error', type=float, default=1)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')

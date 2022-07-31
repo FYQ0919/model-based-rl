@@ -169,21 +169,21 @@ class Learner(Logger):
 
   def update_weights(self, batch):
     batch, idxs, is_weights = batch
-    observations, actions, targets, abstarct_loss_batch, aggregation_times_batch = batch
+    observations, actions, targets,  aggregation_times_batch = batch
 
     target_rewards, target_values, target_policies = targets
 
     if self.config.norm_obs:
       observations = (observations - self.obs_min) / self.obs_range
-    observations = torch.from_numpy(observations).to(self.device)
+    observations = torch.tensor(observations).to(self.device)
 
     value, reward, policy_logits, hidden_state = self.network.initial_inference(observations)
 
     with torch.no_grad():
-      target_policies = torch.from_numpy(target_policies).to(self.device)
-      target_values = torch.from_numpy(target_values).to(self.device)
-      target_rewards = torch.from_numpy(target_rewards).to(self.device)
-      is_weights = torch.from_numpy(is_weights).to(self.device)
+      target_policies = torch.tensor(target_policies).to(self.device)
+      target_values = torch.tensor(target_values).to(self.device)
+      target_rewards = torch.tensor(target_rewards).to(self.device)
+      is_weights = torch.tensor(is_weights).to(self.device)
 
       init_value = self.config.inverse_value_transform(value) if not self.config.no_support else value
       new_errors = (init_value.squeeze() - target_values[:, 0]).cpu().numpy()
@@ -201,55 +201,62 @@ class Learner(Logger):
     value_loss = self.scalar_loss_fn(value.squeeze(), target_values[:, 0])
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
     abstract_loss = 0
+    abstract_v_loss = 0
 
     aggregation_times = 0
 
     for k in aggregation_times_batch:
       aggregation_times += np.mean(k)
     aggregation_times /= len(aggregation_times_batch)
-
-    step_error = self.config.max_transitive_error / self.config.num_sample_action
+    if self.config.num_sample_action == 0:
+      step_error = self.config.max_transitive_error / self.config.action_space
+    else:
+      step_error = self.config.max_transitive_error / self.config.num_sample_action
     Abstract_node = {}
-    aggregation_times = 0
-    action_space = np.array(self.config.action_space)
+
+    action_space = np.array(range(self.config.action_space))
     sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
     node_aggregation_times = 0
 
     for i in range(len(sample_action)):
       action = sample_action[i]
 
-      abstract_representation, predict_Q = self.network.abstract_embed(self.hidden_state,
-                                                                torch.tensor([action]).to(self.hidden_state.device))
+      next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
 
-      predict_Q = predict_Q.item()
+      abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
+
+      predict_V = self.config.inverse_value_transform(predict_V)
+
+      predict_V.item()
 
       for a, abstract in Abstract_node.items():
-        abstract_r, abstract_Q  = abstract[0], abstract[1]
+        abstract_r, abstract_V  = abstract[0], abstract[1]
 
-        if abs(predict_Q - abstract_Q) < step_error:
+        if abs(predict_V - abstract_V) < step_error * (predict_V + abstract_V) / 2:
 
           node_aggregation_times += 1
-          node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r, abstract_representation)) + \
-                          torch.norm(abstract_r - abstract_representation)
+          node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r, abstract_representation)).to(self.device) + \
+                          torch.norm(abstract_r - abstract_representation).to(self.device)
           abstract_loss += node_abstract_loss
 
-
-
-          if predict_Q > abstract_Q:
-            Abstract_node[action] = [abstract_representation, predict_Q, abstract_loss]
+          if predict_V > abstract_V:
+            Abstract_node[action] = [abstract_representation, abstract_V, abstract_loss]
             Abstract_node.pop(a)
           else:
             Abstract_node[a][-1] = abstract_loss
           break
       if action not in Abstract_node.keys():
-        Abstract_node[action] = [abstract_representation, predict_Q, 0]
-
-    abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
+        Abstract_node[action] = [abstract_representation, predict_V, 0]
+    if node_aggregation_times == 0:
+      abstract_loss = 0
+    else:
+      abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
 
     for i, action in enumerate(zip(*actions), 1):
-      hidden_state, predict_Q = self.network.abstract_embed(hidden_state, action)
-      value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
-      hidden_state.register_hook(lambda grad: grad * 0.5)
+      next_hidden_state, reward = self.network.dynamics(hidden_state, action)
+      abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
+      policy_logits, value = self.network.prediction(abstract_representation)
+      abstract_representation.register_hook(lambda grad: grad * 0.5)
 
       reward_loss += self.scalar_loss_fn(reward.squeeze(), target_rewards[:, i])
 
@@ -257,13 +264,17 @@ class Learner(Logger):
       
       policy_loss += self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, i])
 
+      abstract_v_loss += self.scalar_loss_fn(predict_V.squeeze(), target_values[:, i])
+
 
     reward_loss = (is_weights * reward_loss).mean()
     value_loss = (is_weights * value_loss).mean()
     policy_loss = (is_weights * policy_loss).mean()
     abstract_loss = (is_weights * abstract_loss).mean()
+    abstract_v_loss = (is_weights * abstract_v_loss).mean()
 
-    full_weighted_loss = reward_loss + value_loss + policy_loss + self.config.abstarct_loss_weight * abstract_loss
+    full_weighted_loss = reward_loss + value_loss + policy_loss + self.config.abstract_loss_weight * abstract_loss + \
+                         abstract_v_loss
 
     full_weighted_loss.register_hook(lambda grad: grad * (1/self.config.num_unroll_steps))
 

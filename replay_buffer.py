@@ -129,7 +129,6 @@ class PrioritizedReplay():
     target_policies = np.zeros((self.batch_size, self.target_length, self.action_space), dtype=np.float32)
     target_rewards = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
     target_values = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
-    abstract_loss = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
     aggregation_times = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
 
     if self.beta < 1:
@@ -155,12 +154,11 @@ class PrioritizedReplay():
       self.insert_target(batch_idx, history, step, target_rewards,
                                                    target_values,
                                                    target_policies,
-                                                   abstract_loss,
                                                    aggregation_times)
 
 
 
-    batch = (batch_observations, batch_actions, (target_rewards, target_values, target_policies), abstract_loss, aggregation_times)
+    batch = (batch_observations, batch_actions, (target_rewards, target_values, target_policies), aggregation_times)
 
     sampling_probabilities = priorities / self.tree.total_priority
     is_weights = np.power(self.tree.num_memories*sampling_probabilities, -self.beta)
@@ -170,7 +168,6 @@ class PrioritizedReplay():
   def insert_target(self, batch_idx, history, step, target_rewards,
                                                     target_values,
                                                     target_policies,
-                                                    abstract_loss,
                                                     aggregation_times):
     end_index = len(history.root_values)
     for idx, current_index in enumerate(range(step, step + self.num_unroll_steps + 1)):
@@ -200,14 +197,12 @@ class PrioritizedReplay():
         target_policies[batch_idx, idx, :] = history.child_visits[current_index]
         target_rewards[batch_idx, idx] = last_reward
         target_values[batch_idx, idx] = value
-        abstract_loss[batch_idx, idx] = history.abstract_loss[current_index]
         aggregation_times[batch_idx, idx] = history.aggregation_times[current_index]
 
       else:
         target_policies[batch_idx, idx, :] = self.absorbing_policy
         target_rewards[batch_idx, idx] = last_reward
         target_values[batch_idx, idx] = 0
-        abstract_loss[batch_idx, idx] = 0
         aggregation_times[batch_idx, idx] = 0
 
 

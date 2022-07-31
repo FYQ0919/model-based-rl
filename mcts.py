@@ -48,18 +48,13 @@ class Node(object):
       return 0
     return self.value_sum / self.visit_count
 
-  def expand(self, network_output, to_play, actions, config, model):
+  def expand(self, hidden_state, policy_logits, to_play, actions, config, model):
     self.to_play = to_play
-    self.hidden_state = network_output.hidden_state
+    self.hidden_state = hidden_state
 
     actions = np.array(actions)
 
-    if network_output.reward:
-      self.reward = network_output.reward.item()
-
     sample_num = config.num_sample_action
-
-    policy_logits = network_output.policy_logits
 
     policy_values = torch.softmax(
       torch.tensor([policy_logits[0][a].item() for a in actions]), dim=0
@@ -96,33 +91,33 @@ class Node(object):
       Abstract_node = {}
       aggregation_times = 0
 
+
       for i in range(len(sample_action)):
         action = sample_action[i]
         p = sample_policy_values[i]
 
-        abstract_representation, predict_Q = model.abstract_embed(self.hidden_state,
-                                                                  torch.tensor([action]).to(self.hidden_state.device))
+        next_hidden_state, reward = model.dynamics(self.hidden_state, torch.tensor([action]).to(self.hidden_state.device))
 
+        abstract_representation, predict_V = model.abstract_embed(next_hidden_state)
 
-        predict_Q = predict_Q.item()
+        predict_V = predict_V.item()
+
+        reward = reward.item()
 
         for a, abstract in Abstract_node.items():
-          abstract_r, abstract_Q, p = abstract[0], abstract[1], abstract[2]
+          abstract_r, abstract_V, p = abstract[0], abstract[1], abstract[2]
 
-          if abs(predict_Q - abstract_Q) < step_error:
+          if abs(predict_V - abstract_V) < step_error * (predict_V + abstract_V) / 2:
             aggregation_times += 1
-            previous_loss = abstract[3]
-            abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r, abstract_representation)) + \
-                            torch.norm(abstract_r - abstract_representation) + previous_loss
 
-            if predict_Q > abstract_Q:
-              Abstract_node[action] = [abstract_representation, predict_Q, p, abstract_loss]
+            if predict_V > abstract_V:
+              Abstract_node[action] = [abstract_representation, predict_V, p, reward]
               Abstract_node.pop(a)
-            else:
-              Abstract_node[a][-1] = abstract_loss
+
+
             break
         if action not in Abstract_node.keys():
-          Abstract_node[action] = [abstract_representation, predict_Q, p, 0]
+          Abstract_node[action] = [abstract_representation, predict_V, p, reward]
 
       if self.aggregation_times < aggregation_times:
         self.aggregation_times = aggregation_times
@@ -130,13 +125,7 @@ class Node(object):
       for action, abstract in Abstract_node.items():
         self.children[action] = Node(abstract[2])
         self.children[action].hidden_state = abstract[0]
-        self.children[action].Q = abstract[1]
-        self.children[action].abstract_loss = abstract[3]
-
-      for i in range(len(sample_action)):
-        a = sample_action[i]
-        p = sample_policy_values[i]
-        self.children[a] = Node(p)
+        self.children[action].reward = abstract[-1]
 
     else:
       policy = {a: policy_values[i] for i, a in enumerate(actions)}
@@ -183,12 +172,12 @@ class MCTS(object):
         if self.two_players:
           to_play *= -1
 
-      parent = search_path[-2]
+      hidden_state = node.hidden_state
+      policy_logits, value = network.prediction(hidden_state)
 
-      network_output = network.recurrent_inference(parent.hidden_state, [action])
-      node.expand(network_output, to_play, self.action_space, self.config, network)
+      node.expand(hidden_state, policy_logits, to_play, self.action_space, self.config, network)
 
-      self.backpropagate(search_path, network_output.value.item(), to_play)
+      self.backpropagate(search_path, value.item(), to_play)
 
       search_paths.append(search_path)
 
