@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import math
+import datetime
 
 
 class MinMaxStats(object):
@@ -113,6 +114,7 @@ class MCTS(object):
 
     search_paths = []
     for _ in range(self.num_simulations):
+      #s = datetime.datetime.now()
       node = root
       search_path = [node]
       to_play = root.to_play
@@ -132,6 +134,8 @@ class MCTS(object):
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
       search_paths.append(search_path)
+      #e = datetime.datetime.now()
+      #print(f'sim time:{(e-s).microseconds}')
     return search_paths
 
   def select_child(self, node):
