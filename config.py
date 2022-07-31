@@ -169,9 +169,9 @@ def make_config():
   training.add_argument('--send_weights_frequency', type=int, default=500)
   training.add_argument('--weight_sync_frequency', type=int, default=1000)
   training.add_argument('--td_steps', nargs='+', type=int, default=[10])
-  training.add_argument('--batch_size', nargs='+', type=int, default=[16])
+  training.add_argument('--batch_size', nargs='+', type=int, default=[256])
   training.add_argument('--batches_per_fetch', type=int, default=15)
-  training.add_argument('--stored_before_train', type=int, default=1000)
+  training.add_argument('--stored_before_train', type=int, default=50000)
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
@@ -180,14 +180,14 @@ def make_config():
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
   ### Sampled Muzero
-  training.add_argument('--num_sample_action', type=int, default=10)
+  training.add_argument('--num_sample_action', type=int, default=12)
 
   ### IBS
   training.add_argument('--max_r', type=int, default=1)
 
   ### Abstract Representation
   training.add_argument('--abstract_loss_weight', type=float, default=10.)
-  training.add_argument('--max_transitive_error', type=float, default=1)
+  training.add_argument('--max_transitive_error', type=float, default=0.1)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
