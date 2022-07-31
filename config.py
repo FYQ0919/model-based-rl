@@ -187,7 +187,7 @@ def make_config():
 
   ### Abstract Representation
   training.add_argument('--abstract_loss_weight', type=float, default=10.)
-  training.add_argument('--max_transitive_error', type=float, default=0.1)
+  training.add_argument('--max_transitive_error', type=float, default=1)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')

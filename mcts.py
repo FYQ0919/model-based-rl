@@ -66,7 +66,6 @@ class Node(object):
 
     if sample_num > 0:
 
-      s = datetime.datetime.now()
       regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
       v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
       alpha = np.linspace(1e-3, 1, 100)
@@ -81,8 +80,6 @@ class Node(object):
           ratio_min = ratio
       best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
 
-      e = datetime.datetime.now()
-      print(f'IBS time: {(e - s).microseconds}')
 
       if len(actions) > sample_num:
         sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
@@ -97,7 +94,6 @@ class Node(object):
       Abstract_node = {}
       aggregation_times = 0
 
-      s1 = datetime.datetime.now()
       for i in range(len(sample_action)):
         action = sample_action[i]
         p = sample_policy_values[i]
@@ -124,8 +120,7 @@ class Node(object):
       if self.aggregation_times < aggregation_times:
         self.aggregation_times = aggregation_times
 
-      e1 = datetime.datetime.now()
-      print(f'AR TIME:{(e1-s1).microseconds}')
+
 
       for action, abstract in Abstract_node.items():
         self.children[action] = Node(abstract[2])
@@ -166,7 +161,7 @@ class MCTS(object):
 
     search_paths = []
     for _ in range(self.num_simulations):
-      s2 = datetime.datetime.now()
+      # s2 = datetime.datetime.now()
       node = root
       search_path = [node]
       to_play = root.to_play
@@ -187,9 +182,9 @@ class MCTS(object):
 
       search_paths.append(search_path)
 
-      e2 = datetime.datetime.now()
-
-      print(f'sim time:{(e2 - s2).microseconds}')
+      # e2 = datetime.datetime.now()
+      #
+      # print(f'sim time:{(e2 - s2).microseconds}')
 
     return search_paths
 
