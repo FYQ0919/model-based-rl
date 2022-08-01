@@ -218,35 +218,33 @@ class Learner(Logger):
     sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
     node_aggregation_times = 0
 
+
     for i in range(len(sample_action)):
       action = sample_action[i]
 
-      next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
+      next_hidden_state, reward = self.network.dynamics(self.hidden_state, torch.tensor([action]).to(self.hidden_state.device))
 
       abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
 
-      predict_V = self.config.inverse_value_transform(predict_V)
+      predict_V = predict_V.item()
 
-      predict_V.item()
+      reward = reward.item()
 
-      for a, abstract in Abstract_node.items():
-        abstract_r, abstract_V  = abstract[0], abstract[1]
+      Abstract_node[action] = [abstract_representation, predict_V, reward]
 
-        if abs(predict_V - abstract_V) < step_error * (predict_V + abstract_V) / 2:
+    sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
 
-          node_aggregation_times += 1
-          node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r, abstract_representation)).to(self.device) + \
-                          torch.norm(abstract_r - abstract_representation).to(self.device)
-          abstract_loss += node_abstract_loss
+    for k in range(len(sorted_Abstract_node) - 1):
+      a1, v1, abstract_r1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1], sorted_Abstract_node[k][1][0]
+      a2, v2, abstract_r2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1], sorted_Abstract_node[k + 1][1][0]
+      if abs(v2 - v1) < abs(step_error * (v1 + v2) / 2):
+        node_aggregation_times += 1
+        node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r1, abstract_r2)).to(
+          self.device) + \
+                             torch.norm(abstract_r1 - abstract_r2).to(self.device)
+        abstract_loss += node_abstract_loss
+        Abstract_node.pop(a1)
 
-          if predict_V > abstract_V:
-            Abstract_node[action] = [abstract_representation, abstract_V, abstract_loss]
-            Abstract_node.pop(a)
-          else:
-            Abstract_node[a][-1] = abstract_loss
-          break
-      if action not in Abstract_node.keys():
-        Abstract_node[action] = [abstract_representation, predict_V, 0]
     if node_aggregation_times == 0:
       abstract_loss = 0
     else:

@@ -113,14 +113,12 @@ class Node(object):
       for k in range(len(sorted_Abstract_node)-1):
         a1, v1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1]
         a2, v2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1]
-        if abs(v2 - v1) < step_error * (v1 + v2) / 2:
+        if abs(v2 - v1) < abs(step_error * (v1 + v2) / 2):
           aggregation_times += 1
           Abstract_node.pop(a1)
 
       if self.aggregation_times < aggregation_times:
         self.aggregation_times = aggregation_times
-
-
 
       for action, abstract in Abstract_node.items():
         self.children[action] = Node(abstract[2])
