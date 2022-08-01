@@ -222,15 +222,16 @@ class Learner(Logger):
     for i in range(len(sample_action)):
       action = sample_action[i]
 
-      next_hidden_state, reward = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
+      next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
 
       abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
 
+      predict_V = self.config.inverse_value_transform(predict_V)
+
       predict_V = predict_V.item()
 
-      reward = reward.item()
 
-      Abstract_node[action] = [abstract_representation, predict_V, reward]
+      Abstract_node[action] = [abstract_representation, predict_V]
 
     sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
 
