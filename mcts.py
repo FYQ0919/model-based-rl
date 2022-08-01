@@ -65,13 +65,9 @@ class Node(object):
 
     regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
     v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-    uniform_dis = np.ones(actions.shape) / len(actions)
-    if np.dot((uniform_dis - policy_values), v_a) > 1:
-      best_a = 1
-      best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
-    else:
-      best_a = 1e-6
-      best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
+    uniform_policy = np.ones(actions.shape) / len(actions)
+
+    best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
 
     if sample_num > 0:
 
@@ -102,6 +98,43 @@ class Node(object):
     for a, n in zip(actions, noise):
       self.children[a].prior = self.children[a].prior*(1-frac) + n*frac
 
+  def golden_selection(self, regret, v_a, uniform_policy, policy_values):
+    R = 0.618033989
+    C = 1.0 - R
+    a = 0
+    b = 1
+    # First telescoping
+    x1 = R * a + C * b
+    x2 = C * a + R * b
+
+    policy1 = x1 * uniform_policy + (1 - x1) * policy_values
+    policy2 = x2 * uniform_policy + (1 - x2) * policy_values
+
+    ratio1 = (np.dot(policy1, regret) ** 2 / (np.dot(policy1, v_a)))
+    ratio2 = (np.dot(policy2, regret) ** 2 / (np.dot(policy2, v_a)))
+
+    e = 1e-5
+    # Main loop
+
+    while b - a > e:
+      if ratio2 > ratio1:
+        a = x1
+        x1 = x2
+        ratio1 = ratio2
+        x2 = a + C * (b - a)
+        policy2 = x2 * uniform_policy + (1 - x2) * policy_values
+        ratio2 = (np.dot(policy2, regret) ** 2 / (np.dot(policy2, v_a)))
+      else:
+        b = x2
+        x2 = x1
+        ratio2 = ratio1
+        x1 = a + R * (b - a)
+        policy1 = x1 * uniform_policy + (1 - x1) * policy_values
+        ratio1 = (np.dot(policy1, regret) ** 2 / (np.dot(policy1, v_a)))
+    best_a = (a + b) / 2
+    policy_out = best_a * uniform_policy + (1 - best_a) * policy_values
+
+    return best_a, policy_out
 
 class MCTS(object):
 
