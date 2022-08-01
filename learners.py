@@ -222,7 +222,7 @@ class Learner(Logger):
     for i in range(len(sample_action)):
       action = sample_action[i]
 
-      next_hidden_state, reward = self.network.dynamics(self.hidden_state, torch.tensor([action]).to(self.hidden_state.device))
+      next_hidden_state, reward = self.network.dynamics(hidden_state, torch.tensor([action]).to(hidden_state.device))
 
       abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
 
