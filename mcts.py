@@ -65,17 +65,13 @@ class Node(object):
 
     regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
     v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-    alpha = np.linspace(1e-3, 1, 100)
-    ratio_min = 1e9
-    best_a = 0
-
-    for a_ in alpha:
-      policy = a_ * np.ones(actions.shape) / len(actions) + (1 - a_) * policy_values
-      ratio = (np.dot(policy, regret) ** 2 / (np.dot(policy, v_a)))
-      if ratio < ratio_min:
-        best_a = a_
-        ratio_min = ratio
-    best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
+    uniform_dis = np.ones(actions.shape) / len(actions)
+    if np.dot((uniform_dis - policy_values), v_a) > 1:
+      best_a = 1
+      best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
+    else:
+      best_a = 1e-6
+      best_dis = best_a * np.ones(actions.shape) / len(actions) + (1 - best_a) * policy_values
 
     if sample_num > 0:
 
