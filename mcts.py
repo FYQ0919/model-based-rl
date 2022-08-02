@@ -37,7 +37,7 @@ class Node(object):
     self.children = {}
     self.prior = prior
     self.to_play = 1
-    self.Q_loss = 0
+    self.abstract_V = 0
     self.aggregation_times = 0
     self.abstract_loss = 0
     self.Q = 0
@@ -50,7 +50,7 @@ class Node(object):
       return 0
     return self.value_sum / self.visit_count
 
-  def expand(self, hidden_state, policy_logits, to_play, actions, config, model):
+  def expand(self, hidden_state, policy_logits, to_play, actions, config):
     self.to_play = to_play
     self.hidden_state = hidden_state
 
@@ -82,40 +82,11 @@ class Node(object):
         torch.tensor([policy_logits[0][a] for a in sample_action]), dim=0
       ).numpy().astype('float64')
 
-      step_error = config.max_transitive_error / config.num_sample_action
-      Abstract_node = {}
-      aggregation_times = 0
-
       for i in range(len(sample_action)):
         action = sample_action[i]
         p = sample_policy_values[i]
+        self.children[action] = Node(p)
 
-        next_hidden_state, reward = model.dynamics(self.hidden_state, torch.tensor([action]).to(self.hidden_state.device))
-
-        abstract_representation, predict_V = model.abstract_embed(next_hidden_state)
-
-        predict_V = predict_V.item()
-
-        reward = reward.item()
-
-        Abstract_node[action] = [abstract_representation, predict_V, p, reward]
-
-      sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
-
-      for k in range(len(sorted_Abstract_node)-1):
-        a1, v1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1]
-        a2, v2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1]
-        if abs(v2 - v1) < abs(step_error * (v1 + v2) / 2):
-          aggregation_times += 1
-          Abstract_node.pop(a1)
-
-      if self.aggregation_times < aggregation_times:
-        self.aggregation_times = aggregation_times
-
-      for action, abstract in Abstract_node.items():
-        self.children[action] = Node(abstract[2])
-        self.children[action].hidden_state = abstract[0]
-        self.children[action].reward = abstract[-1]
 
     else:
       policy = {a: policy_values[i] for i, a in enumerate(actions)}
@@ -186,6 +157,8 @@ class MCTS(object):
 
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
+    step_error = self.config.max_transitive_error / self.num_simulations
+    min_max_v = MinMaxStats()
 
     search_paths = []
     for _ in range(self.num_simulations):
@@ -196,17 +169,36 @@ class MCTS(object):
 
       while node.expanded():
         action, node = self.select_child(node)
+
         search_path.append(node)
 
         if self.two_players:
           to_play *= -1
 
-      hidden_state = node.hidden_state
-      policy_logits, value = network.prediction(hidden_state)
+      parent = search_path[-2]
 
-      node.expand(hidden_state, policy_logits, to_play, self.action_space, self.config, network)
+      next_hidden_state = network.dynamics(parent.hidden_state, [action])
+      abstract_representastion , abstarct_V = network.abstract_embed(next_hidden_state)
+      node.abstract_v = abstarct_V.item()
+      min_max_v.update(abstarct_V.item())
+
+      policy_logits, value = network.prediction(abstract_representastion)
+
+      node.expand(abstract_representastion, policy_logits, to_play, self.action_space, self.config)
 
       self.backpropagate(search_path, value.item(), to_play)
+
+      for a in parent.children.keys():
+        if parent.children[a].abstract_v != 0 and a != action:
+          v1 = min_max_v.normalize(node.abstract_v)
+          v2 = min_max_v.normalize(parent.children[a].abstract_v)
+          if abs(v1 - v2) < step_error:
+            parent.aggregation_times += 1
+            if v1 > v2:
+              parent.children.pop(a)
+            else:
+              parent.children.pop(action)
+
 
       search_paths.append(search_path)
 
@@ -225,6 +217,7 @@ class MCTS(object):
       _, action, child = max(
           (self.ucb_score(node, child), action, child)
           for action, child in node.children.items())
+
     return action, child
 
   def ucb_score(self, parent, child):
