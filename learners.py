@@ -243,9 +243,9 @@ class Learner(Logger):
         node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r1, abstract_r2)).to(
           self.device) + \
                              torch.norm(abstract_r1 - abstract_r2).to(self.device)
-        if self.training_step % 10000 == 0:
-          torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
-          torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
+        # if self.training_step % 10000 == 0:
+        #   torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
+        #   torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
         abstract_loss += node_abstract_loss
 
     if node_aggregation_times == 0:
