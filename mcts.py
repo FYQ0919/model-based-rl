@@ -37,7 +37,7 @@ class Node(object):
     self.children = {}
     self.prior = prior
     self.to_play = 1
-    self.abstract_V = 0
+    self.abstract_v = 0
     self.aggregation_times = 0
     self.abstract_loss = 0
     self.Q = 0
