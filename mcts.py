@@ -189,6 +189,8 @@ class MCTS(object):
 
       self.backpropagate(search_path, value.item(), to_play)
 
+      pop_child = []
+
       for a in parent.children.keys():
         if parent.children[a].abstract_v != 0 and a != action:
           v1 = min_max_v.normalize(node.abstract_v)
@@ -196,9 +198,13 @@ class MCTS(object):
           if abs(v1 - v2) < step_error:
             parent.aggregation_times += 1
             if v1 > v2:
-              parent.children.pop(a)
+             pop_child.append(a)
             else:
-              parent.children.pop(action)
+             pop_child.append(action)
+      pop_child = list(set(pop_child))
+
+      for child in pop_child:
+        parent.children.pop(child)
 
 
       search_paths.append(search_path)
