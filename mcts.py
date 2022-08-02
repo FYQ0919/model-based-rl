@@ -177,7 +177,8 @@ class MCTS(object):
 
       parent = search_path[-2]
 
-      next_hidden_state = network.dynamics(parent.hidden_state, [action])
+      next_hidden_state, reward = network.dynamics(parent.hidden_state, [action])
+      node.reward = reward.item()
       abstract_representastion , abstarct_V = network.abstract_embed(next_hidden_state)
       node.abstract_v = abstarct_V.item()
       min_max_v.update(abstarct_V.item())
