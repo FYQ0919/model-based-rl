@@ -196,6 +196,7 @@ class FCNetwork(BaseNetwork):
     a = torch.from_numpy(action).to(self.device)
     one_hot = torch.zeros((batch_size, self.action_space), dtype=torch.float32, device=self.device)
     one_hot.scatter_(1, a, 1.0)
+    # print(hidden_state, one_hot)
     hidden_state = torch.cat((hidden_state, one_hot), dim=1)
     return hidden_state
 

@@ -212,46 +212,48 @@ class Learner(Logger):
       step_error = self.config.max_transitive_error / self.config.action_space
     else:
       step_error = self.config.max_transitive_error / self.config.num_sample_action
-    Abstract_node = {}
 
-    action_space = np.array(range(self.config.action_space))
-    sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
-    node_aggregation_times = 0
+    if step_error > 0:
+      Abstract_node = {}
 
-
-    for i in range(len(sample_action)):
-      action = sample_action[i]
-
-      next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
-
-      abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
-
-      predict_V = self.config.inverse_value_transform(predict_V)
-
-      predict_V = predict_V.item()
+      action_space = np.array(range(self.config.action_space))
+      sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
+      node_aggregation_times = 0
 
 
-      Abstract_node[action] = [abstract_representation, predict_V]
+      for i in range(len(sample_action)):
+        action = sample_action[i]
 
-    sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
+        next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
 
-    for k in range(len(sorted_Abstract_node) - 1):
-      a1, v1, abstract_r1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1], sorted_Abstract_node[k][1][0]
-      a2, v2, abstract_r2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1], sorted_Abstract_node[k + 1][1][0]
-      if abs(v2 - v1) < abs(step_error * (v1 + v2) / 2):
-        node_aggregation_times += 1
-        node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r1, abstract_r2)).to(
-          self.device) + \
-                             torch.norm(abstract_r1 - abstract_r2).to(self.device)
-        # if self.training_step % 10000 == 0:
-        #   torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
-        #   torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
-        abstract_loss += node_abstract_loss
+        abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
 
-    if node_aggregation_times == 0:
-      abstract_loss = 0
-    else:
-      abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
+        predict_V = self.config.inverse_value_transform(predict_V)
+
+        predict_V = predict_V.item()
+
+
+        Abstract_node[action] = [abstract_representation, predict_V]
+
+      sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
+
+      for k in range(len(sorted_Abstract_node) - 1):
+        a1, v1, abstract_r1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1], sorted_Abstract_node[k][1][0]
+        a2, v2, abstract_r2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1], sorted_Abstract_node[k + 1][1][0]
+        if abs(v2 - v1) < abs(step_error * (v1 + v2) / 2):
+          node_aggregation_times += 1
+          node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r1, abstract_r2)).to(
+            self.device) + \
+                               torch.norm(abstract_r1 - abstract_r2).to(self.device)
+          # if self.training_step % 10000 == 0:
+          #   torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
+          #   torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
+          abstract_loss += node_abstract_loss
+
+      if node_aggregation_times == 0:
+        abstract_loss = 0
+      else:
+        abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
 
     for i, action in enumerate(zip(*actions), 1):
       next_hidden_state, reward = self.network.dynamics(hidden_state, action)
@@ -291,6 +293,7 @@ class Learner(Logger):
     if self.lr_scheduler is not None:
       self.lr_scheduler.step()
 
+    value_loss += abstract_v_loss
     self.losses_to_log['reward'] += reward_loss.detach().cpu().item()
     self.losses_to_log['value'] += value_loss.detach().cpu().item()
     self.losses_to_log['policy'] += policy_loss.detach().cpu().item()

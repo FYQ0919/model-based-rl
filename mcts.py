@@ -157,7 +157,7 @@ class MCTS(object):
 
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
-    step_error = self.config.max_transitive_error / self.num_simulations
+    step_error = self.config.max_transitive_error / self.config.num_sample_action
     min_max_v = MinMaxStats()
 
     search_paths = []
@@ -189,22 +189,24 @@ class MCTS(object):
 
       self.backpropagate(search_path, value.item(), to_play)
 
-      pop_child = []
+      if step_error > 0:
 
-      for a in parent.children.keys():
-        if parent.children[a].abstract_v != 0 and a != action:
-          v1 = min_max_v.normalize(node.abstract_v)
-          v2 = min_max_v.normalize(parent.children[a].abstract_v)
-          if abs(v1 - v2) < step_error:
-            parent.aggregation_times += 1
-            if v1 > v2:
-             pop_child.append(a)
-            else:
-             pop_child.append(action)
-      pop_child = list(set(pop_child))
+        pop_child = []
 
-      for child in pop_child:
-        parent.children.pop(child)
+        for a in parent.children.keys():
+          if parent.children[a].abstract_v != 0 and a != action:
+            v1 = min_max_v.normalize(node.abstract_v)
+            v2 = min_max_v.normalize(parent.children[a].abstract_v)
+            if abs(v1 - v2) < step_error:
+              parent.aggregation_times += 1
+              if v1 > v2:
+               pop_child.append(a)
+              else:
+               pop_child.append(action)
+        pop_child = list(set(pop_child))
+
+        for child in pop_child:
+          parent.children.pop(child)
 
 
       search_paths.append(search_path)
