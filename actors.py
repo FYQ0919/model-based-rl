@@ -140,11 +140,11 @@ class Actor(Logger):
       hidden_state = initial_inference.hidden_state
       policy_logits = initial_inference.policy_logits
 
-      legal_actions = game.environment.legal_actions()
+      legal_actions = game.environment.legal_actions
       root.expand(hidden_state, policy_logits, game.to_play, legal_actions, self.config)
       root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
-      self.mcts.run(root, self.network)
+      self.mcts.run(root, self.network, legal_actions)
 
       error = root.value() - initial_inference.value.item()
       game.history.errors.append(error)

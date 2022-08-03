@@ -64,13 +64,13 @@ def launch(config, date, state=None):
   ray.init()
 
   env = get_environment(config)
-  config.action_space = env.action_space.n
+  config.action_space = [int(env.action_space.shape[0]), config.clip_actions]
   config.obs_space = env.observation_space.shape
 
   storage = SharedStorage.remote(config)
   replay_buffer = PrioritizedReplay.remote(config)
   actors = [Actor.remote(actor_key, config, storage, replay_buffer, state) for actor_key in range(config.num_actors)]
-  learner = Learner.remote(config, storage, replay_buffer, state)
+  learner = Learner.remote(config, storage, replay_buffer, env, state)
   workers = [learner] + actors
 
   print_launch_message(config, date)

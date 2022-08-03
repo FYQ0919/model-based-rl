@@ -56,43 +56,41 @@ class Node(object):
 
     actions = np.array(actions)
 
+
+    action_dim = actions.shape[0]
+
+    action_clip = actions.shape[1]
+
+    expand_action_prior = []
+
     sample_num = config.num_sample_action
 
-    policy_values = torch.softmax(
-      torch.tensor([policy_logits[0][a].item() for a in actions]), dim=0
-    ).numpy().astype('float64')
+    for i in range(action_dim):
 
-    policy_values /= policy_values.sum()
+      policy_values = torch.softmax(
+        torch.tensor([policy_logits[0][i][a].item() for a in range(action_clip)]), dim=0
+      ).numpy().astype('float64')
 
-    if sample_num > 0:
+      policy_values /= policy_values.sum()
 
-      regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
-      v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-      uniform_policy = np.ones(actions.shape) / len(actions)
+      regret = config.max_r * np.ones(shape=actions[i].shape) - self.reward * policy_values
+      v_a = ((actions[i] - (actions[i] * policy_values) ** 2) ** 2) * policy_values
+      uniform_policy = np.ones(actions[i].shape) / len(actions[i])
 
       best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
 
-
-      if len(actions) > sample_num:
-        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
-      else:
-        sample_action = actions
-
-      sample_policy_values = torch.softmax(
-        torch.tensor([policy_logits[0][a] for a in sample_action]), dim=0
-      ).numpy().astype('float64')
-
-      for i in range(len(sample_action)):
-        action = sample_action[i]
-        p = sample_policy_values[i]
-        self.children[action] = Node(p)
+      expand_action_prior.append(best_dis)
 
 
-    else:
-      policy = {a: policy_values[i] for i, a in enumerate(actions)}
-
-      for action, p in policy.items():
-        self.children[action] = Node(p)
+    for j in range(sample_num):
+      expand_action = ()
+      p = 1
+      for k in range(action_dim):
+        a = np.random.choice(actions[k], size=1, replace=False, p=expand_action_prior[k])
+        expand_action += tuple([float(a)])
+        idx = np.where(actions[k] == a)[0]
+        p *= expand_action_prior[k][idx]
+      self.children[expand_action] = Node(p)
 
 
   def add_exploration_noise(self, dirichlet_alpha, frac):
@@ -149,13 +147,13 @@ class MCTS(object):
     self.pb_c_base = config.pb_c_base
     self.pb_c_init = config.pb_c_init
     self.init_value_score = config.init_value_score
-    self.action_space = range(config.action_space)
+    self.action_space = config.action_space
     self.two_players = config.two_players
     self.known_bounds = config.known_bounds
 
     self.min_max_stats = MinMaxStats(*config.known_bounds)
 
-  def run(self, root, network):
+  def run(self, root, network, legal_actions):
     self.min_max_stats.reset(*self.known_bounds)
     step_error = self.config.max_transitive_error / self.num_simulations
     min_max_v = MinMaxStats()
@@ -177,7 +175,9 @@ class MCTS(object):
 
       parent = search_path[-2]
 
-      next_hidden_state, reward = network.dynamics(parent.hidden_state, [action])
+      np_action = np.array([action])
+
+      next_hidden_state, reward = network.dynamics(parent.hidden_state, torch.tensor(np_action, dtype=torch.float32))
       node.reward = reward.item()
       abstract_representastion , abstarct_V = network.abstract_embed(next_hidden_state)
       node.abstract_v = abstarct_V.item()
@@ -185,7 +185,7 @@ class MCTS(object):
 
       policy_logits, value = network.prediction(abstract_representastion)
 
-      node.expand(abstract_representastion, policy_logits, to_play, self.action_space, self.config)
+      node.expand(abstract_representastion, policy_logits, to_play, legal_actions, self.config)
 
       self.backpropagate(search_path, value.item(), to_play)
 
@@ -201,6 +201,7 @@ class MCTS(object):
              pop_child.append(a)
             else:
              pop_child.append(action)
+
       pop_child = list(set(pop_child))
 
       for child in pop_child:

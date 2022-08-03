@@ -464,8 +464,11 @@ def wrap_game(env, config):
             env = ClipRewardEnv(env)
 
     if not hasattr(env, 'legal_actions'):
-      legal_actions = range(env.action_space.n)
-      env.legal_actions = lambda: legal_actions
+      clip_actions = config.clip_actions
+      action_low = env.action_space.low
+      action_high = env.action_space.high
+      legal_actions = np.linspace(action_low, action_high, clip_actions).T
+      env.legal_actions = legal_actions
 
     return env
 

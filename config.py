@@ -139,6 +139,9 @@ def make_config():
   self_play.add_argument('--visit_softmax_steps', nargs=2, type=int, default=[15e3, 30e3])
   self_play.add_argument('--fixed_temperatures', nargs='+', type=float, default=[])
 
+  # clip action
+  self_play.add_argument('--clip_actions', type=int, default=10)
+
   # MCTS exploration
   exploration = parser.add_argument_group('exploration')
   exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.25)

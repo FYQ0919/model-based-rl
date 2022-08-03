@@ -24,7 +24,7 @@ def get_network(config, device=None):
       device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     env = get_environment(config)
-    action_space = env.action_space.n
+    action_space = [int(env.action_space.shape[0]), config.clip_actions]
 
     if config.architecture == 'MuZeroNetwork':
       input_channels = config.stack_obs

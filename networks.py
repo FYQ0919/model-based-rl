@@ -75,7 +75,7 @@ class FCDynamicsState(nn.Module):
   def __init__(self, input_dim, action_space, hidden_dim):
     super(FCDynamicsState, self).__init__()
 
-    self.fc1 = nn.Linear(hidden_dim+action_space, 512)
+    self.fc1 = nn.Linear(hidden_dim+action_space[0], 512)
     self.out = nn.Linear(512, hidden_dim)
 
   def forward(self, x):
@@ -100,10 +100,11 @@ class FCDynamicsReward(nn.Module):
   def __init__(self, input_dim, action_space, reward_support_size, hidden_dim):
     super(FCDynamicsReward, self).__init__()
 
-    self.fc1 = nn.Linear(hidden_dim+action_space, 512)
+    self.fc1 = nn.Linear(hidden_dim + action_space[0], 512)
     self.reward = nn.Linear(512, reward_support_size)
 
   def forward(self, x):
+
     x = F.relu(self.fc1(x))
     return self.reward(x)
 
@@ -125,19 +126,30 @@ class FCPredictionPolicy(nn.Module):
 
   def __init__(self, input_dim, action_space, hidden_dim):
     super(FCPredictionPolicy, self).__init__()
-    
+    self.action_space = action_space
     self.fc1 = nn.Linear(hidden_dim, 512)
-    self.policy = nn.Linear(512, action_space)
+    action_dim = action_space[0]
+    self.Policy = [nn.Linear(512, action_space[1]) for i in range(action_dim) ]
+
+
 
   def forward(self, x):
+    batch_size = x.shape[0]
     x = F.relu(self.fc1(x))
-    return self.policy(x)
+
+    out = torch.tensor([])
+    for i in range(len(self.Policy)):
+      out = torch.cat([out, torch.softmax(self.Policy[i](x), dim=1)], dim=0)
+    policy = torch.reshape(out,(batch_size, self.action_space[0], self.action_space[1]))
+
+    return policy
 
 
 class FCNetwork(BaseNetwork):
 
   def __init__(self, input_dim, action_space, device, config):
     super(FCNetwork, self).__init__()
+
     self.device = device
 
     self.no_support = config.no_support
@@ -191,12 +203,8 @@ class FCNetwork(BaseNetwork):
 
   def attach_action(self, hidden_state, action):
 
-    batch_size = np.shape(action)[0]
-    action = np.array(action, dtype=np.int64)[:, np.newaxis]
-    a = torch.from_numpy(action).to(self.device)
-    one_hot = torch.zeros((batch_size, self.action_space), dtype=torch.float32, device=self.device)
-    one_hot.scatter_(1, a, 1.0)
-    hidden_state = torch.cat((hidden_state, one_hot), dim=1)
+    action = action.to(self.device)
+    hidden_state = torch.cat((hidden_state, action), dim=1)
     return hidden_state
 
   def load_weights(self, weights):

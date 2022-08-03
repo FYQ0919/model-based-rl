@@ -126,7 +126,7 @@ class PrioritizedReplay():
     idxs = []
 
     batch_observations = np.zeros((self.batch_size, *self.obs_space), dtype=np.float32)
-    target_policies = np.zeros((self.batch_size, self.target_length, self.action_space), dtype=np.float32)
+    target_policies = np.zeros((self.batch_size, self.target_length, self.action_space[0], self.action_space[1]), dtype=np.float32)
     target_rewards = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
     target_values = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
     aggregation_times = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
@@ -147,8 +147,8 @@ class PrioritizedReplay():
       batch_observations[batch_idx, :] = np.float32(history.observations[step])
 
       actions = history.actions[step:step + self.num_unroll_steps]
-      while len(actions) < self.num_unroll_steps:
-        actions.append(np.random.randint(self.action_space))
+      # while len(actions) < self.num_unroll_steps:
+      #   actions.append(np.random.randint(self.action_space))
       batch_actions.append(actions)
 
       self.insert_target(batch_idx, history, step, target_rewards,
@@ -193,6 +193,7 @@ class PrioritizedReplay():
           rewards = np.array(rewards, dtype=np.float32)
           rewards[not_to_play] *= -1
           value += np.dot(rewards, self.discounts[:len(rewards)])
+
 
         target_policies[batch_idx, idx, :] = history.child_visits[current_index]
         target_rewards[batch_idx, idx] = last_reward

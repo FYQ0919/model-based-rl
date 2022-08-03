@@ -14,10 +14,11 @@ import os
 @ray.remote
 class Learner(Logger):
 
-  def __init__(self, config, storage, replay_buffer, state=None):
+  def __init__(self, config, storage, replay_buffer, env, state=None):
     set_all_seeds(config.seed)
 
     self.run_tag = config.run_tag
+    self.env = env
     self.group_tag = config.group_tag
     self.worker_id = 'learner'
     self.replay_buffer = replay_buffer
@@ -197,9 +198,10 @@ class Learner(Logger):
         target_values = self.config.value_phi(target_values)
         target_rewards = self.config.reward_phi(target_rewards)
 
+
     reward_loss = 0
     value_loss = self.scalar_loss_fn(value.squeeze(), target_values[:, 0])
-    policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
+    policy_loss = self.policy_loss_fn(policy_logits, target_policies[:, 0])
     abstract_loss = 0
     abstract_v_loss = 0
 
@@ -212,17 +214,26 @@ class Learner(Logger):
       step_error = self.config.max_transitive_error / self.config.action_space
     else:
       step_error = self.config.max_transitive_error / self.config.num_sample_action
+
     Abstract_node = {}
 
-    action_space = np.array(range(self.config.action_space))
-    sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
+    sample_action = []
     node_aggregation_times = 0
 
+    legal_actions = self.env.legal_actions
+
+    for j in range(self.config.num_sample_action):
+      expand_action = ()
+
+      for k in range(self.config.action_space[0]):
+        a = np.random.choice(legal_actions[k], size=1, replace=False)
+        expand_action += tuple([float(a)])
+      sample_action.append(expand_action)
 
     for i in range(len(sample_action)):
       action = sample_action[i]
-
-      next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
+      np_action = np.array([action])
+      next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),torch.tensor(np_action, dtype=torch.float32))
 
       abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
 
@@ -243,9 +254,9 @@ class Learner(Logger):
         node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r1, abstract_r2)).to(
           self.device) + \
                              torch.norm(abstract_r1 - abstract_r2).to(self.device)
-        if self.training_step % 10000 == 0:
-          torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
-          torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
+        # if self.training_step % 10000 == 0:
+        #   torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
+        #   torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
         abstract_loss += node_abstract_loss
 
     if node_aggregation_times == 0:
@@ -254,7 +265,13 @@ class Learner(Logger):
       abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
 
     for i, action in enumerate(zip(*actions), 1):
-      next_hidden_state, reward = self.network.dynamics(hidden_state, action)
+      np_action = np.array(action[0])[np.newaxis]
+      for j in range(1, len(action)):
+
+        np_action = np.concatenate((np_action, np.array(action[j])[np.newaxis]),axis=0)
+
+
+      next_hidden_state, reward = self.network.dynamics(hidden_state, torch.tensor(np_action, dtype=torch.float32))
       abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
       policy_logits, value = self.network.prediction(abstract_representation)
       abstract_representation.register_hook(lambda grad: grad * 0.5)
@@ -267,6 +284,7 @@ class Learner(Logger):
 
       abstract_v_loss += self.scalar_loss_fn(predict_V.squeeze(), target_values[:, i])
 
+    policy_loss = torch.mean(policy_loss,dim=1)
 
     reward_loss = (is_weights * reward_loss).mean()
     value_loss = (is_weights * value_loss).mean()
