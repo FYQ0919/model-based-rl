@@ -64,6 +64,8 @@ class Node(object):
 
     policy_values /= policy_values.sum()
 
+    self.best_a = actions[np.argmax(policy_values)]
+
     if sample_num > 0:
 
       regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
@@ -158,7 +160,7 @@ class MCTS(object):
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
     step_error = self.config.max_transitive_error / self.config.num_sample_action
-    min_max_v = MinMaxStats()
+
 
     search_paths = []
     for _ in range(self.num_simulations):
@@ -180,10 +182,10 @@ class MCTS(object):
       next_hidden_state, reward = network.dynamics(parent.hidden_state, [action])
       node.reward = reward.item()
       abstract_representastion , abstarct_V = network.abstract_embed(next_hidden_state)
-      node.abstract_v = abstarct_V.item()
-      min_max_v.update(abstarct_V.item())
+
 
       policy_logits, value = network.prediction(abstract_representastion)
+      node.abstract_v = abstarct_V.item()
 
       node.expand(abstract_representastion, policy_logits, to_play, self.action_space, self.config)
 
@@ -195,9 +197,11 @@ class MCTS(object):
 
         for a in parent.children.keys():
           if parent.children[a].abstract_v != 0 and a != action:
-            v1 = min_max_v.normalize(node.abstract_v)
-            v2 = min_max_v.normalize(parent.children[a].abstract_v)
-            if abs(v1 - v2) < step_error:
+            v1 = node.abstract_v
+            best_a1 = node.best_a
+            v2 = parent.children[a].abstract_v
+            best_a2 = parent.children[a].best_a
+            if abs(v1 - v2) < step_error * (abs(v1) + abs(v2))/2 and best_a2 == best_a1:
               parent.aggregation_times += 1
               if v1 > v2:
                pop_child.append(a)

@@ -1,4 +1,4 @@
-from utils import get_network, get_optimizer, get_lr_scheduler, get_loss_functions, set_all_seeds
+from utils import get_network, get_optimizer, get_lr_scheduler, get_loss_functions, set_all_seeds, abstract_loss_func
 from mcts import MCTS, Node
 from logger import Logger
 from copy import deepcopy
@@ -43,6 +43,7 @@ class Learner(Logger):
     self.optimizer = get_optimizer(config, self.network.parameters())
     self.lr_scheduler = get_lr_scheduler(config, self.optimizer)
     self.scalar_loss_fn, self.policy_loss_fn = get_loss_functions(config)
+    self.abstract_loss_fn = abstract_loss_func()
 
     self.training_step = 0
     self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0., 'abstract': 0., 'aggregation_times': 0.}
@@ -217,49 +218,45 @@ class Learner(Logger):
       Abstract_node = {}
 
       action_space = np.array(range(self.config.action_space))
-      sample_action = np.random.choice(action_space, size=self.config.num_sample_action, replace=False)
+
       node_aggregation_times = 0
 
 
-      for i in range(len(sample_action)):
-        action = sample_action[i]
+      for i in range(len(action_space)):
+        action = action_space[i]
 
         next_hidden_state, _ = self.network.dynamics(hidden_state[0].unsqueeze(0),[action])
 
-        abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
+        policy, predict_V = self.network.prediction(next_hidden_state)
+
+        policy = torch.softmax(
+      torch.tensor([policy[0][a].item() for a in action_space]), dim=0
+    ).numpy().astype('float64')
 
         predict_V = self.config.inverse_value_transform(predict_V)
 
         predict_V = predict_V.item()
 
-
-        Abstract_node[action] = [abstract_representation, predict_V]
+        Abstract_node[action] = [next_hidden_state,  predict_V, np.argmax(policy)]
 
       sorted_Abstract_node = sorted(Abstract_node.items(), key=lambda x: x[1][1])
 
       for k in range(len(sorted_Abstract_node) - 1):
-        a1, v1, abstract_r1 = sorted_Abstract_node[k][0], sorted_Abstract_node[k][1][1], sorted_Abstract_node[k][1][0]
-        a2, v2, abstract_r2 = sorted_Abstract_node[k + 1][0], sorted_Abstract_node[k + 1][1][1], sorted_Abstract_node[k + 1][1][0]
-        if abs(v2 - v1) < abs(step_error * (v1 + v2) / 2):
+        a1, v1, abstract_r1 = sorted_Abstract_node[k][1][2], sorted_Abstract_node[k][1][1], sorted_Abstract_node[k][1][0]
+        a2, v2, abstract_r2 = sorted_Abstract_node[k + 1][1][2], sorted_Abstract_node[k + 1][1][1], sorted_Abstract_node[k + 1][1][0]
+        if abs(v2 - v1) < (step_error * (abs(v1) + abs(v2)) / 2) and a1 == a2:
           node_aggregation_times += 1
-          node_abstract_loss = (torch.tensor(1) - torch.cosine_similarity(abstract_r1, abstract_r2)).to(
-            self.device) + \
-                               torch.norm(abstract_r1 - abstract_r2).to(self.device)
-          # if self.training_step % 10000 == 0:
-          #   torch.save(abstract_r1, f"r_a1{a1}_{self.training_step}")
-          #   torch.save(abstract_r2, f"r_a2{a2}_{self.training_step}")
-          abstract_loss += node_abstract_loss
+          abstract_loss += self.abstract_loss_fn(abstract_r1, abstract_r2)
 
-      if node_aggregation_times == 0:
-        abstract_loss = 0
-      else:
+      if node_aggregation_times > 0:
+
         abstract_loss /= torch.tensor(node_aggregation_times).to(self.device)
 
     for i, action in enumerate(zip(*actions), 1):
       next_hidden_state, reward = self.network.dynamics(hidden_state, action)
       abstract_representation, predict_V = self.network.abstract_embed(next_hidden_state)
       policy_logits, value = self.network.prediction(abstract_representation)
-      abstract_representation.register_hook(lambda grad: grad * 0.5)
+      next_hidden_state.register_hook(lambda grad: grad * 0.5)
 
       reward_loss += self.scalar_loss_fn(reward.squeeze(), target_rewards[:, i])
 
@@ -276,8 +273,8 @@ class Learner(Logger):
     abstract_loss = (is_weights * abstract_loss).mean()
     abstract_v_loss = (is_weights * abstract_v_loss).mean()
 
-    full_weighted_loss = reward_loss + value_loss + policy_loss + self.config.abstract_loss_weight * abstract_loss + \
-                         abstract_v_loss
+    full_weighted_loss = reward_loss + value_loss + policy_loss + abstract_loss * self.config.abstract_loss_weight + abstract_v_loss
+
 
     full_weighted_loss.register_hook(lambda grad: grad * (1/self.config.num_unroll_steps))
 

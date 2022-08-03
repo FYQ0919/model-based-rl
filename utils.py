@@ -1,4 +1,5 @@
 from wrappers import wrap_game
+from torch import nn
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.optim import SGD, RMSprop, Adam, AdamW
 from torch.nn import MSELoss, LogSoftmax, SmoothL1Loss
@@ -70,6 +71,8 @@ def get_loss_functions(config):
         raise NotImplementedError
     return scalar_loss, policy_loss
 
+
+
 def get_optimizer(config, parameters):
     if config.optimizer == 'RMSprop':
       optimizer = RMSprop(parameters, lr=config.lr_init, momentum=config.momentum, eps=0.01, weight_decay=config.weight_decay)
@@ -99,6 +102,24 @@ class MuZeroLR():
     self.lr = self.lr_init * self.lr_decay_rate ** (self.lr_step / self.lr_decay_steps)
     for param_group in self.optimizer.param_groups:
       param_group["lr"] = self.lr
+
+class abstract_loss_func(nn.Module):
+    def __init__(self):
+        # --------------------------------------------
+        # Initialization
+        # --------------------------------------------
+        super(abstract_loss_func, self).__init__()
+        self.cos = nn.CosineSimilarity(dim=1)
+
+
+
+    def forward(self, outputs, targets):
+        # --------------------------------------------
+        # Define forward pass
+        # --------------------------------------------
+        loss = 1 - self.cos(outputs, targets) + torch.norm(outputs - targets)
+
+        return loss
 
 
 class WarmUpLR():
