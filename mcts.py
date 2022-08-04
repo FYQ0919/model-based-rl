@@ -45,17 +45,12 @@ class Node(object):
       return 0
     return self.value_sum / self.visit_count
 
-  def expand(self, network_output, to_play, actions, config):
+  def expand(self, hidden_state, policy_logits, to_play, actions, config):
     self.to_play = to_play
-    self.hidden_state = network_output.hidden_state
+    self.hidden_state = hidden_state
     actions = np.array(actions)
 
-    if network_output.reward:
-      self.reward = network_output.reward.item()
-
     sample_num = config.num_sample_action
-
-    policy_logits = network_output.policy_logits
 
     policy_values = torch.softmax(
       torch.tensor([policy_logits[0][a].item() for a in actions]), dim=0
@@ -67,6 +62,12 @@ class Node(object):
 
 
     if sample_num > 0:
+      # regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
+      # v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
+      # uniform_policy = np.ones(actions.shape) / len(actions)
+      #
+      # best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+
       if len(actions) > sample_num:
         sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
       else:
@@ -85,6 +86,44 @@ class Node(object):
 
       for action, p in policy.items():
         self.children[action] = Node(p)
+
+  def golden_selection(self, regret, v_a, uniform_policy, policy_values):
+    R = 0.618033989
+    C = 1.0 - R
+    a = 0
+    b = 1
+    # First telescoping
+    x1 = R * a + C * b
+    x2 = C * a + R * b
+
+    policy1 = x1 * uniform_policy + (1 - x1) * policy_values
+    policy2 = x2 * uniform_policy + (1 - x2) * policy_values
+
+    ratio1 = (np.dot(policy1, regret) ** 2 / (np.dot(policy1, v_a)))
+    ratio2 = (np.dot(policy2, regret) ** 2 / (np.dot(policy2, v_a)))
+
+    e = 1e-5
+    # Main loop
+
+    while b - a > e:
+      if ratio2 > ratio1:
+        a = x1
+        x1 = x2
+        ratio1 = ratio2
+        x2 = a + C * (b - a)
+        policy2 = x2 * uniform_policy + (1 - x2) * policy_values
+        ratio2 = (np.dot(policy2, regret) ** 2 / (np.dot(policy2, v_a)))
+      else:
+        b = x2
+        x2 = x1
+        ratio2 = ratio1
+        x1 = a + R * (b - a)
+        policy1 = x1 * uniform_policy + (1 - x1) * policy_values
+        ratio1 = (np.dot(policy1, regret) ** 2 / (np.dot(policy1, v_a)))
+    best_a = (a + b) / 2
+    policy_out = best_a * uniform_policy + (1 - best_a) * policy_values
+
+    return best_a, policy_out
 
 
   def add_exploration_noise(self, dirichlet_alpha, frac):
@@ -128,10 +167,14 @@ class MCTS(object):
 
       parent = search_path[-2]
 
-      network_output = network.recurrent_inference(parent.hidden_state, [action])
-      node.expand(network_output, to_play, self.action_space, self.config)
+      # network_output = network.recurrent_inference(parent.hidden_state, [action])
+      hidden_state, reward = network.dynamics(parent.hidden_state, [action])
+      policy_logits, value = network.prediction(hidden_state)
 
-      self.backpropagate(search_path, network_output.value.item(), to_play)
+      node.expand(hidden_state, policy_logits,to_play, self.action_space, self.config)
+      node.reward = reward.item()
+
+      self.backpropagate(search_path, value.item(), to_play)
 
       search_paths.append(search_path)
       #e = datetime.datetime.now()

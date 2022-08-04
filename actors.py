@@ -137,9 +137,11 @@ class Actor(Logger):
       current_observation = torch.from_numpy(current_observation).to(self.device)
 
       initial_inference = self.network.initial_inference(current_observation.unsqueeze(0))
+      hidden_state = initial_inference.hidden_state
+      policy_logits = initial_inference.policy_logits
 
       legal_actions = game.environment.legal_actions()
-      root.expand(initial_inference, game.to_play, legal_actions, self.config)
+      root.expand(hidden_state, policy_logits, game.to_play, legal_actions, self.config)
       root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
       self.mcts.run(root, self.network)

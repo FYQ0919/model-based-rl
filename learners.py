@@ -196,7 +196,9 @@ class Learner(Logger):
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
 
     for i, action in enumerate(zip(*actions), 1):
-      value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
+      # value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
+      hidden_state, reward = self.network.dynamics(hidden_state, action)
+      policy_logits, value = self.network.prediction(hidden_state)
       hidden_state.register_hook(lambda grad: grad * 0.5)
 
       reward_loss += self.scalar_loss_fn(reward.squeeze(), target_rewards[:, i])
