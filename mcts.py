@@ -68,15 +68,15 @@ class Node(object):
 
     if sample_num > 0:
 
-      regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
-      v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-      uniform_policy = np.ones(actions.shape) / len(actions)
-
-      best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+      # regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
+      # v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
+      # uniform_policy = np.ones(actions.shape) / len(actions)
+      #
+      # best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
 
 
       if len(actions) > sample_num:
-        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
+        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
       else:
         sample_action = actions
 
