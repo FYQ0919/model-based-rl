@@ -58,7 +58,7 @@ class Game(object):
     self.clip_rewards = config.clip_rewards
     self.sticky_actions = config.sticky_actions
     self.two_players = config.two_players
-    self.action_space = range(config.action_space)
+    self.action_space = config.action_space
     self.discount = config.discount
 
     self.environment = environment
@@ -104,10 +104,15 @@ class Game(object):
       self.to_play *= -1
 
   def store_search_statistics(self, root):
+
     sum_visits = sum(child.visit_count for child in root.children.values())
-    self.history.child_visits.append([
-      root.children[a].visit_count/sum_visits if a in root.children else 0
-      for a in self.action_space])
+    visit_count = np.zeros((self.action_space[0], self.action_space[1]))
+    for action in root.children.keys():
+      for i in range(len(action)):
+        if action[i] in self.environment.legal_actions[i]:
+          visit_count[i][np.where(self.environment.legal_actions[i] == action[i])[0]] \
+            += root.children[action].visit_count / sum_visits
+    self.history.child_visits.append(visit_count)
     value = root.value()
     self.history.root_values.append(value)
     self.sum_values += value

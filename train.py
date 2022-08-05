@@ -64,7 +64,7 @@ def launch(config, date, state=None):
   ray.init()
 
   env = get_environment(config)
-  config.action_space = env.action_space.n
+  config.action_space = [int(env.action_space.shape[0]), config.clip_actions]
   config.obs_space = env.observation_space.shape
 
   storage = SharedStorage.remote(config)

@@ -196,7 +196,12 @@ class Learner(Logger):
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
 
     for i, action in enumerate(zip(*actions), 1):
-      value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
+      # print(action)
+      np_action = np.array(action[0])[np.newaxis]
+      for j in range(1, len(action)):
+        np_action = np.concatenate((np_action, np.array(action[j])[np.newaxis]), axis=0)
+
+      value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, torch.tensor(np_action, dtype=torch.float32))
       hidden_state.register_hook(lambda grad: grad * 0.5)
 
       reward_loss += self.scalar_loss_fn(reward.squeeze(), target_rewards[:, i])
@@ -205,6 +210,7 @@ class Learner(Logger):
       
       policy_loss += self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, i])
 
+    policy_loss = torch.mean(policy_loss, dim=1)
     reward_loss = (is_weights * reward_loss).mean()
     value_loss = (is_weights * value_loss).mean()
     policy_loss = (is_weights * policy_loss).mean()

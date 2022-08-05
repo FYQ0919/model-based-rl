@@ -48,43 +48,39 @@ class Node(object):
   def expand(self, network_output, to_play, actions, config):
     self.to_play = to_play
     self.hidden_state = network_output.hidden_state
+    policy_logits = network_output.policy_logits
     actions = np.array(actions)
-
-    if network_output.reward:
-      self.reward = network_output.reward.item()
-
+    action_dim = actions.shape[0]
     sample_num = config.num_sample_action
 
-    policy_logits = network_output.policy_logits
+    action_clip = actions.shape[1]
 
-    policy_values = torch.softmax(
-      torch.tensor([policy_logits[0][a].item() for a in actions]), dim=0
-    ).numpy().astype('float64')
+    expand_action_prior = []
 
-    policy_values /= policy_values.sum()
-
-    policy_values = 0.999 * policy_values + 1e-3 * np.ones(actions.shape) / len(actions)
-
-
-    if sample_num > 0:
-      if len(actions) > sample_num:
-        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
-      else:
-        sample_action = actions
-
-      sample_policy_values = torch.softmax(
-        torch.tensor([policy_logits[0][a] for a in sample_action]), dim=0
+    for i in range(action_dim):
+      policy_values = torch.softmax(
+        torch.tensor([policy_logits[0][i][a].item() for a in range(action_clip)]), dim=0
       ).numpy().astype('float64')
 
-      for i in range(len(sample_action)):
-        a = sample_action[i]
-        p = sample_policy_values[i]
-        self.children[a] = Node(p)
-    else:
-      policy = {a: policy_values[i] for i, a in enumerate(actions)}
+      policy_values /= policy_values.sum()
 
-      for action, p in policy.items():
-        self.children[action] = Node(p)
+      # regret = config.max_r * np.ones(shape=actions[i].shape) - self.reward * policy_values
+      # v_a = ((actions[i] - (actions[i] * policy_values) ** 2) ** 2) * policy_values
+      # uniform_policy = np.ones(actions[i].shape) / len(actions[i])
+      #
+      # best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+
+      expand_action_prior.append(policy_values)
+
+    for j in range(sample_num):
+      expand_action = ()
+      p = 1
+      for k in range(action_dim):
+        a = np.random.choice(actions[k], size=1, replace=False, p=expand_action_prior[k])
+        expand_action += tuple([float(a)])
+        idx = np.where(actions[k] == a)[0]
+        p *= expand_action_prior[k][idx]
+      self.children[expand_action] = Node(p)
 
 
   def add_exploration_noise(self, dirichlet_alpha, frac):
@@ -103,13 +99,13 @@ class MCTS(object):
     self.pb_c_base = config.pb_c_base
     self.pb_c_init = config.pb_c_init
     self.init_value_score = config.init_value_score
-    self.action_space = range(config.action_space)
+    self.action_space = config.action_space
     self.two_players = config.two_players
     self.known_bounds = config.known_bounds
 
     self.min_max_stats = MinMaxStats(*config.known_bounds)
 
-  def run(self, root, network):
+  def run(self, root, network, legal_actions):
     self.min_max_stats.reset(*self.known_bounds)
 
     search_paths = []
@@ -127,9 +123,10 @@ class MCTS(object):
           to_play *= -1
 
       parent = search_path[-2]
+      np_action = np.array([action])
 
-      network_output = network.recurrent_inference(parent.hidden_state, [action])
-      node.expand(network_output, to_play, self.action_space, self.config)
+      network_output = network.recurrent_inference(parent.hidden_state, torch.tensor(np_action, dtype=torch.float32))
+      node.expand(network_output, to_play, legal_actions, self.config)
 
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
