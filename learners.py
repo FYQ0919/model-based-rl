@@ -43,7 +43,7 @@ class Learner(Logger):
     self.optimizer = get_optimizer(config, self.network.parameters())
     self.lr_scheduler = get_lr_scheduler(config, self.optimizer)
     self.scalar_loss_fn, self.policy_loss_fn = get_loss_functions(config)
-    self.abstract_loss_fn = abstract_loss_func()
+    self.abstract_loss_fn = torch.nn.CosineSimilarity()
 
     self.training_step = 0
     self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0., 'abstract': 0., 'aggregation_times': 0.}
@@ -273,7 +273,7 @@ class Learner(Logger):
     abstract_loss = (is_weights * abstract_loss).mean()
     abstract_v_loss = (is_weights * abstract_v_loss).mean()
 
-    full_weighted_loss = reward_loss + value_loss + policy_loss + abstract_loss * self.config.abstract_loss_weight + abstract_v_loss
+    full_weighted_loss = reward_loss + value_loss + policy_loss + abstract_loss + abstract_v_loss
 
 
     full_weighted_loss.register_hook(lambda grad: grad * (1/self.config.num_unroll_steps))

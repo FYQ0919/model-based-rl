@@ -68,15 +68,17 @@ class Node(object):
 
     if sample_num > 0:
 
-      # regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
-      # v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
-      # uniform_policy = np.ones(actions.shape) / len(actions)
-      #
-      # best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+      regret = config.max_r * np.ones(shape=actions.shape) - self.reward * policy_values
+      v_a = ((actions - (actions * policy_values) ** 2) ** 2) * policy_values
+      uniform_policy = np.ones(actions.shape) / len(actions)
+
+      best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+
+      # print(best_alpha)
 
 
       if len(actions) > sample_num:
-        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
+        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
       else:
         sample_action = actions
 
@@ -105,7 +107,7 @@ class Node(object):
 
   def golden_selection(self, regret, v_a, uniform_policy, policy_values):
     R = 0.618033989
-    C = 1.0 - R
+    C = 1 - R
     a = 0
     b = 1
     # First telescoping
