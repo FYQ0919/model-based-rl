@@ -152,11 +152,11 @@ def make_config():
   # UCB formula
   ucb = parser.add_argument_group('UCB formula')
   ucb.add_argument('--pb_c_base', type=int, default=19652)
-  ucb.add_argument('--pb_c_init', type=float, default=1.25)
+  ucb.add_argument('--pb_c_init', type=float, default=0.5)
 
   ### Prioritized Replay Buffer
   per = parser.add_argument_group('prioritized experience replay')
-  per.add_argument('--window_size', nargs='+', type=int, default=[10000])
+  per.add_argument('--window_size', nargs='+', type=int, default=[100000])
   per.add_argument('--window_step', nargs='+', type=int, default=[None])
   per.add_argument('--epsilon', type=float, default=0.01)
   per.add_argument('--alpha', type=float, default=1.)

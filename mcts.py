@@ -155,7 +155,7 @@ class MCTS(object):
       value_score = self.min_max_stats.normalize(child.reward + self.discount*value)
     else:
       value_score = self.init_value_score
-    return prior_score + value_score
+    return prior_score * 10 + value_score
 
   def backpropagate(self, search_path, value, to_play):
     for idx, node in enumerate(reversed(search_path)):
