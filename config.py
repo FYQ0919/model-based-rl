@@ -180,7 +180,11 @@ def make_config():
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
   ### Sampled Muzero
-  training.add_argument('--num_sample_action', type=int, default=0)
+  training.add_argument('--num_sample_action', type=int, default=10)
+
+  ### IBS
+  training.add_argument('--max_r', type=float, default=1)
+  training.add_argument('--min_r', type=float, default=-1)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')

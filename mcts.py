@@ -36,6 +36,7 @@ class Node(object):
     self.children = {}
     self.prior = prior
     self.to_play = 1
+    self.last_policy = None
 
   def expanded(self):
     return len(self.children) > 0
@@ -67,8 +68,22 @@ class Node(object):
 
 
     if sample_num > 0:
+
+      if self.last_policy != None:
+
+
+        n_r = (self.reward - config.min_r)/ (config.max_r - config.min_r)
+
+        regret = config.max_r * np.ones(shape=actions.shape) - self.reward * self.last_policy
+        v_a = (n_r * np.ones(shape=actions.shape) - (n_r * np.ones(shape=actions.shape)* self.last_policy) ** 2)
+        uniform_policy = np.ones(actions.shape) / len(actions)
+
+        best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+      else:
+        best_dis = policy_values
+
       if len(actions) > sample_num:
-        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=policy_values)
+        sample_action = np.random.choice(actions, size=sample_num, replace=False, p=best_dis)
       else:
         sample_action = actions
 
@@ -85,6 +100,8 @@ class Node(object):
 
       for action, p in policy.items():
         self.children[action] = Node(p)
+        self.children[action].last_policy = policy_values
+
 
 
   def add_exploration_noise(self, dirichlet_alpha, frac):
@@ -92,6 +109,44 @@ class Node(object):
     noise = np.random.dirichlet([dirichlet_alpha] * len(actions))
     for a, n in zip(actions, noise):
       self.children[a].prior = self.children[a].prior*(1-frac) + n*frac
+
+  def golden_selection(self, regret, v_a, uniform_policy, policy_values):
+    R = 0.618033989
+    C = 1 - R
+    a = 0
+    b = 1
+    # First telescoping
+    x1 = R * a + C * b
+    x2 = C * a + R * b
+
+    policy1 = x1 * uniform_policy + (1 - x1) * policy_values
+    policy2 = x2 * uniform_policy + (1 - x2) * policy_values
+
+    ratio1 = (np.dot(policy1, regret) ** 2 / (np.dot(policy1, v_a)))
+    ratio2 = (np.dot(policy2, regret) ** 2 / (np.dot(policy2, v_a)))
+
+    e = 1e-5
+    # Main loop
+
+    while b - a > e:
+      if ratio2 > ratio1:
+        a = x1
+        x1 = x2
+        ratio1 = ratio2
+        x2 = a + C * (b - a)
+        policy2 = x2 * uniform_policy + (1 - x2) * policy_values
+        ratio2 = (np.dot(policy2, regret) ** 2 / (np.dot(policy2, v_a)))
+      else:
+        b = x2
+        x2 = x1
+        ratio2 = ratio1
+        x1 = a + R * (b - a)
+        policy1 = x1 * uniform_policy + (1 - x1) * policy_values
+        ratio1 = (np.dot(policy1, regret) ** 2 / (np.dot(policy1, v_a)))
+    best_a = (a + b) / 2
+    policy_out = best_a * uniform_policy + (1 - best_a) * policy_values
+
+    return best_a, policy_out
 
 
 class MCTS(object):
