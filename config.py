@@ -186,6 +186,9 @@ def make_config():
   training.add_argument('--max_r', type=float, default=1)
   training.add_argument('--min_r', type=float, default=-1)
 
+  # AbS
+  training.add_argument('--step_error', type=float, default=0.1)
+
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
   training.add_argument('--momentum', type=float, default=0.9)
