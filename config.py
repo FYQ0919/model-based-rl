@@ -153,7 +153,7 @@ def make_config():
 
   ### Prioritized Replay Buffer
   per = parser.add_argument_group('prioritized experience replay')
-  per.add_argument('--window_size', nargs='+', type=int, default=[10000])
+  per.add_argument('--window_size', nargs='+', type=int, default=[100000])
   per.add_argument('--window_step', nargs='+', type=int, default=[None])
   per.add_argument('--epsilon', type=float, default=0.01)
   per.add_argument('--alpha', type=float, default=1.)

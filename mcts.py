@@ -66,6 +66,7 @@ class Node(object):
 
     policy_values = 0.999 * policy_values + 1e-3 * np.ones(actions.shape) / len(actions)
 
+    self.best_a = actions[np.argmax(policy_values)]
 
     if sample_num > 0:
 
@@ -166,6 +167,7 @@ class MCTS(object):
 
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
+    step_error = 0.01
 
     search_paths = []
     for _ in range(self.num_simulations):
@@ -189,6 +191,29 @@ class MCTS(object):
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
       search_paths.append(search_path)
+
+      if step_error > 0:
+
+        pop_child = []
+
+        for a in parent.children.keys():
+          if parent.children[a].value() != 0 and a != action:
+            v1 = node.value()
+            best_a1 = node.best_a
+            v2 = parent.children[a].value()
+            best_a2 = parent.children[a].best_a
+            while abs(v1 - v2) < step_error and best_a2 == best_a1:
+              parent.aggregation_times += 1
+              if v1 > v2:
+               pop_child.append(a)
+              else:
+               pop_child.append(action)
+        pop_child = list(set(pop_child))
+
+        for child in pop_child:
+          parent.children.pop(child)
+
+
       #e = datetime.datetime.now()
       #print(f'sim time:{(e-s).microseconds}')
     return search_paths
