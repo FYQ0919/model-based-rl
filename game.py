@@ -68,7 +68,7 @@ class Game(object):
 
     self.environment = environment
 
-    self.history = History([], [], [], [], [], [], [], [], [], [])
+    self.history = History([], [], [], [], [], [], [], [], [], [], [])
 
     self.terminal, self.done = False, False
     self.previous_collect_to = 0
