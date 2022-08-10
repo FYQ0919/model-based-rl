@@ -36,6 +36,7 @@ class Node(object):
     self.children = {}
     self.prior = prior
     self.to_play = 1
+    self.aggregation_times = 0
     self.last_policy = None
 
   def expanded(self):

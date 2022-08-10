@@ -163,7 +163,7 @@ class Learner(Logger):
 
   def update_weights(self, batch):
     batch, idxs, is_weights = batch
-    observations, actions, targets = batch
+    observations, actions, targets,  aggregation_times_batch = batch
 
     target_rewards, target_values, target_policies = targets
 
@@ -194,6 +194,12 @@ class Learner(Logger):
     reward_loss = 0
     value_loss = self.scalar_loss_fn(value.squeeze(), target_values[:, 0])
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
+
+    aggregation_times = 0
+
+    for k in aggregation_times_batch:
+      aggregation_times += np.mean(k)
+    aggregation_times /= len(aggregation_times_batch)
 
     for i, action in enumerate(zip(*actions), 1):
       value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
@@ -228,6 +234,7 @@ class Learner(Logger):
     self.losses_to_log['reward'] += reward_loss.detach().cpu().item()
     self.losses_to_log['value'] += value_loss.detach().cpu().item()
     self.losses_to_log['policy'] += policy_loss.detach().cpu().item()
+    self.losses_to_log['aggregation_times'] += aggregation_times
 
   def launch(self):
     print("Learner is online on {}.".format(self.device))
