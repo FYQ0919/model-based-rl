@@ -190,23 +190,26 @@ class MCTS(object):
       parent = search_path[-2]
 
       network_output = network.recurrent_inference(parent.hidden_state, [action])
-
-
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
       if search_path not in search_paths:
 
         search_paths.append(search_path)
 
+      self.has_aggregation = False
       if self.step_error > 0 and len(search_paths) > 1:
+
+        delet_paths = []
 
         for i in range(len(search_paths)-1):
           branch1 = search_path
           branch2 = search_paths[i]
+          different_nodes = [[],[]]
           if len(branch1) == len(branch2):
 
             branch_value_loss = 0
             aggregation = True
+
             for j in range(1,len(branch1)):
               if branch1[j] != branch2[j]:
                 is_aggregation, value_loss = self.abstract(branch1[j], branch2[j])
@@ -214,27 +217,43 @@ class MCTS(object):
                   aggregation = False
                   break
                 branch_value_loss += value_loss
+                different_nodes[0].append(branch1[j])
+                different_nodes[1].append(branch2[j])
               else:
                 continue
 
             if aggregation:
+
               root.aggregation_times += len(branch1)
               if branch_value_loss >= 0:
-                delet_node = branch2[-1]
-                for a, n in delet_node.parent.children.items():
-                  if n == delet_node:
-                    delet_key = a
-              else:
-                delet_node = branch1[-1]
-                for a, n in delet_node.parent.children.items():
-                  if n == delet_node:
-                    delet_key = a
-              if delet_key in delet_node.parent.children.keys():
-                delet_node.parent.children.pop(delet_key)
 
-      node.expand(network_output, to_play, self.action_space, self.config)
-      for child in node.children.values():
-        child.parent = node
+                 delet_node = different_nodes[1][0]
+
+                 delet_paths.append(branch2)
+                 for a, n in delet_node.parent.children.items():
+                   if n == delet_node:
+                     delet_key = a
+                 if delet_key in delet_node.parent.children.keys():
+                   delet_node.parent.children.pop(delet_key)
+
+
+              else:
+                self.has_aggregation = True
+                delet_node = different_nodes[0][0]
+                delet_paths.append(branch1)
+                for a, n in delet_node.parent.children.items():
+                  if n == delet_node:
+                    delet_key = a
+                if delet_key in delet_node.parent.children.keys():
+                  delet_node.parent.children.pop(delet_key)
+                break
+        for path in delet_paths:
+          search_paths.remove(path)
+      if not self.has_aggregation:
+        node.expand(network_output, to_play, self.action_space, self.config)
+        for child in node.children.values():
+          child.parent = node
+
 
 
     return search_paths
