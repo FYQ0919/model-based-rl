@@ -345,7 +345,7 @@ class MCTS(object):
         for a in node1.children.keys():
           if a in node2.children.keys():
             
-            if round(node1.children[a].value()/self.step_error) != round(node1.children[a].value()/self.step_error):
+            if round(node1.children[a].value()/self.step_error) != round(node2.children[a].value()/self.step_error):
               return False, 0
 
         return True, value_loss
