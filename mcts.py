@@ -324,26 +324,33 @@ class MCTS(object):
         return True, value_loss
 
     elif type == 4:
-      if abs(node1.value() - node2.value()) < self.step_error:
-        value_loss = node1.value() - node2.value()
 
-        if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
-          for a in node1.children.keys():
-            if a in node2.children.keys():
-              Q_sa = abs(node1.children[a].value() - node2.children[a].value())
-              if Q_sa > self.step_error:
-                return False, 0
+      value_loss = node1.value() - node2.value()
 
-          return True, value_loss
-        else:
-          return True, value_loss
+      if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
+        for a in node1.children.keys():
+          if a in node2.children.keys():
+            Q_sa = abs(node1.children[a].value() - node2.children[a].value())
+            if Q_sa > self.step_error:
+              return False, 0
 
-    elif type == 5:
-      if abs(node1.value() - node2.value()) < self.step_error:
-        value_loss = node1.value() - node2.value()
         return True, value_loss
       else:
-        return False, 0
+        return True, value_loss
+
+    elif type == 5:
+      value_loss = node1.value() - node2.value()
+
+      if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
+        for a in node1.children.keys():
+          if a in node2.children.keys():
+            
+            if round(node1.children[a].value()/self.step_error) != round(node1.children[a].value()/self.step_error):
+              return False, 0
+
+        return True, value_loss
+      else:
+        return True, value_loss
     elif type == 6:
       if abs(node1.value() - node2.value()) < self.step_error:
         value_loss = node1.value() - node2.value()
