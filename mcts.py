@@ -232,6 +232,11 @@ class MCTS(object):
               if delet_key in delet_node.parent.children.keys():
                 delet_node.parent.children.pop(delet_key)
 
+        node.expand(network_output, to_play, self.action_space, self.config)
+        for child in node.children.values():
+          child.parent = node
+
+
     return search_paths
 
   def select_child(self, node):
