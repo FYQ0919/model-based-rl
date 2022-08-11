@@ -39,6 +39,7 @@ class Node(object):
     self.aggregation_times = 0
     self.last_policy = None
     self.parent = None
+    self.best_a = None
 
   def expanded(self):
     return len(self.children) > 0
@@ -193,7 +194,9 @@ class MCTS(object):
 
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
-      search_paths.append(search_path)
+      if search_path not in search_paths:
+
+        search_paths.append(search_path)
 
       if self.step_error > 0 and len(search_paths) > 1:
 
@@ -217,15 +220,17 @@ class MCTS(object):
             if aggregation:
               root.aggregation_times += 1
               if branch_value_loss >= 0:
-                  delet_node = branch2[-1]
-                  for a, n in delet_node.parent.children.items():
-                    if n == delet_node:
-                      delet_node.parent.children.pop(a)
+                delet_node = branch2[-1]
+                for a, n in delet_node.parent.children.items():
+                  if n == delet_node:
+                    delet_key = a
               else:
                 delet_node = branch1[-1]
                 for a, n in delet_node.parent.children.items():
                   if n == delet_node:
-                    delet_node.parent.children.pop(a)
+                    delet_key = a
+              if delet_key in delet_node.parent.children.keys():
+                delet_node.parent.children.pop(delet_key)
 
     return search_paths
 
@@ -275,7 +280,9 @@ class MCTS(object):
       if node1.value() == node2.value() and node1.best_a == node2.best_a:
         value_loss = node1.value() - node2.value()
         return True, value_loss
+      else:
+        return False, 0
     else:
-      return False
+      return False, 0
 
 

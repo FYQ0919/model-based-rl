@@ -57,6 +57,7 @@ pip install -r requirements.txt
 
 * Tic-Tac-Toe: ```python train.py --environment tictactoe --two_players --architecture FCNetwork --num_actors 7 --fixed_temperatures 1.0 0.8 0.7 0.5 0.3 0.2 0.1 --td_steps 10 --discount 1 --known_bounds -1 1 --stored_before_train 20000 --group_tag my_group_tag --run_tag my_run_tag```
 
+* Cart-Pole: ```python train.py --environment CartPole-v0 --architecture FCNetwork --num_actors 5 --fixed_temperatures 1.0 0.7 0.5 0.3 0.1 --td_steps 500 --lr_init 0.02 --seed 148 --max_history_length 1000 --group_tag 1000 --run_tag AR_50_100 --num_sample_action 50 --num_simulation 100```
 See live training results with tensorboard:
 ```bash
 tensorboard --logdir model-based-rl/runs/(environment)/(group_tag)/(run_tag)

@@ -126,7 +126,7 @@ class PrioritizedReplay():
         idxs = []
 
         batch_observations = np.zeros((self.batch_size, *self.obs_space), dtype=np.float32)
-        target_policies = np.zeros((self.batch_size, self.target_length, self.action_space[0], self.action_space[1]),
+        target_policies = np.zeros((self.batch_size, self.target_length, self.action_space),
                                    dtype=np.float32)
         target_rewards = np.zeros((self.batch_size, self.target_length), dtype=np.float32)
         target_values = np.zeros((self.batch_size, self.target_length), dtype=np.float32)

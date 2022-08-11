@@ -11,7 +11,7 @@ import ray
 import os
 
 
-@ray.remote(max_call=2)
+@ray.remote
 class Learner(Logger):
 
   def __init__(self, config, storage, replay_buffer, state=None):
@@ -45,7 +45,7 @@ class Learner(Logger):
     self.scalar_loss_fn, self.policy_loss_fn = get_loss_functions(config)
 
     self.training_step = 0
-    self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0.}
+    self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0., 'aggregation_times': 0.}
 
     self.throughput = {'total_frames': 0, 'total_games': 0, 'training_step': 0, 'time': {'ups': 0, 'fps': 0}}
 
@@ -139,14 +139,17 @@ class Learner(Logger):
           reward_loss = self.losses_to_log['reward'] / self.config.learner_log_frequency
           value_loss = self.losses_to_log['value'] / self.config.learner_log_frequency
           policy_loss = self.losses_to_log['policy'] / self.config.learner_log_frequency
+          aggregation_times = self.losses_to_log['aggregation_times'] / self.config.learner_log_frequency
 
           self.losses_to_log['reward'] = 0
           self.losses_to_log['value'] = 0
           self.losses_to_log['policy'] = 0
+          self.losses_to_log['aggregation_times'] = 0
 
           self.log_scalar(tag='loss/reward', value=reward_loss, i=self.training_step)
           self.log_scalar(tag='loss/value', value=value_loss, i=self.training_step)
           self.log_scalar(tag='loss/policy', value=policy_loss, i=self.training_step)
+          self.log_scalar(tag='loss/aggregation_times', value=policy_loss, i=self.training_step)
           self.log_throughput()
 
           if self.lr_scheduler is not None:

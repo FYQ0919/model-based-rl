@@ -13,7 +13,7 @@ import random
 import os
 
 
-@ray.remote(max_call=2)
+@ray.remote
 class Actor(Logger):
 
   def __init__(self, actor_key, config, storage, replay_buffer, state=None):

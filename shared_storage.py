@@ -1,7 +1,7 @@
 import ray
 
 
-@ray.remote(max_call=2)
+@ray.remote
 class SharedStorage(object):
 
   def __init__(self, config):
