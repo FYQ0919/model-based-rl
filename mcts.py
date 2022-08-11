@@ -190,13 +190,15 @@ class MCTS(object):
       parent = search_path[-2]
 
       network_output = network.recurrent_inference(parent.hidden_state, [action])
+      node.expand(network_output, to_play, self.action_space, self.config)
+      for child in node.children.values():
+        child.parent = node
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
       if search_path not in search_paths:
 
         search_paths.append(search_path)
 
-      self.has_aggregation = False
       if self.step_error > 0 and len(search_paths) > 1:
 
         delet_paths = []
@@ -238,7 +240,7 @@ class MCTS(object):
 
 
               else:
-                self.has_aggregation = True
+       
                 delet_node = different_nodes[0][0]
                 delet_paths.append(branch1)
                 for a, n in delet_node.parent.children.items():
@@ -249,12 +251,6 @@ class MCTS(object):
                 break
         for path in delet_paths:
           search_paths.remove(path)
-      if not self.has_aggregation:
-        node.expand(network_output, to_play, self.action_space, self.config)
-        for child in node.children.values():
-          child.parent = node
-
-
 
     return search_paths
 
