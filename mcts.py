@@ -214,7 +214,7 @@ class MCTS(object):
 
             for j in range(1,len(branch1)):
               if branch1[j] != branch2[j]:
-                is_aggregation, value_loss = self.abstract(branch1[j], branch2[j])
+                is_aggregation, value_loss = self.abstract(branch1[j], branch2[j], type=self.config.abstract_type)
                 if not is_aggregation:
                   aggregation = False
                   break
@@ -240,7 +240,7 @@ class MCTS(object):
 
 
               else:
-       
+
                 delet_node = different_nodes[0][0]
                 delet_paths.append(branch1)
                 for a, n in delet_node.parent.children.items():
@@ -295,9 +295,57 @@ class MCTS(object):
 
       value = reward + self.discount*value
 
-  def abstract(self, node1, node2, type=1):
-    if type==1:
+  def abstract(self, node1, node2, type):
+    if type == 1:
       if node1.value() == node2.value() and node1.best_a == node2.best_a:
+        value_loss = node1.value() - node2.value()
+        return True, value_loss
+      else:
+        return False, 0
+
+    elif type == 2:
+      if abs(node1.value() - node2.value()) < self.step_error and node1.best_a == node2.best_a:
+        value_loss = node1.value() - node2.value()
+        return True, value_loss
+      else:
+        return False, 0
+
+    elif type == 3:
+      value_loss = node1.value() - node2.value()
+      if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
+
+        for a in node1.children.keys():
+          if a in node2.children.keys():
+           Q_sa = abs(node1.children[a].value() - node2.children[a].value())
+           if Q_sa > 0:
+             return False, 0
+        return True, value_loss
+      else:
+        return True, value_loss
+
+    elif type == 4:
+      if abs(node1.value() - node2.value()) < self.step_error:
+        value_loss = node1.value() - node2.value()
+
+        if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
+          for a in node1.children.keys():
+            if a in node2.children.keys():
+              Q_sa = abs(node1.children[a].value() - node2.children[a].value())
+              if Q_sa > self.step_error:
+                return False, 0
+
+          return True, value_loss
+        else:
+          return True, value_loss
+
+    elif type == 5:
+      if abs(node1.value() - node2.value()) < self.step_error:
+        value_loss = node1.value() - node2.value()
+        return True, value_loss
+      else:
+        return False, 0
+    elif type == 6:
+      if abs(node1.value() - node2.value()) < self.step_error:
         value_loss = node1.value() - node2.value()
         return True, value_loss
       else:

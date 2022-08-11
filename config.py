@@ -188,6 +188,7 @@ def make_config():
 
   # AbS
   training.add_argument('--step_error', type=float, default=0.1)
+  training.add_argument('--abstract_type', type=int, default=1)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
