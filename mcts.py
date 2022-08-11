@@ -218,7 +218,7 @@ class MCTS(object):
                 continue
 
             if aggregation:
-              root.aggregation_times += 1
+              root.aggregation_times += len(branch1)
               if branch_value_loss >= 0:
                 delet_node = branch2[-1]
                 for a, n in delet_node.parent.children.items():
@@ -232,9 +232,9 @@ class MCTS(object):
               if delet_key in delet_node.parent.children.keys():
                 delet_node.parent.children.pop(delet_key)
 
-        node.expand(network_output, to_play, self.action_space, self.config)
-        for child in node.children.values():
-          child.parent = node
+      node.expand(network_output, to_play, self.action_space, self.config)
+      for child in node.children.values():
+        child.parent = node
 
 
     return search_paths
