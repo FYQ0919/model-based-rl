@@ -11,7 +11,7 @@ import ray
 import os
 
 
-@ray.remote
+@ray.remote(max_call=2)
 class Learner(Logger):
 
   def __init__(self, config, storage, replay_buffer, state=None):

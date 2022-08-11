@@ -38,6 +38,7 @@ class Node(object):
     self.to_play = 1
     self.aggregation_times = 0
     self.last_policy = None
+    self.parent = None
 
   def expanded(self):
     return len(self.children) > 0
@@ -97,6 +98,7 @@ class Node(object):
         a = sample_action[i]
         p = sample_policy_values[i]
         self.children[a] = Node(p)
+
     else:
       policy = {a: policy_values[i] for i, a in enumerate(actions)}
 
@@ -168,11 +170,11 @@ class MCTS(object):
 
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
-    step_error = self.config.step_error
+    self.step_error = self.config.step_error
 
     search_paths = []
     for _ in range(self.num_simulations):
-      #s = datetime.datetime.now()
+
       node = root
       search_path = [node]
       to_play = root.to_play
@@ -187,36 +189,44 @@ class MCTS(object):
       parent = search_path[-2]
 
       network_output = network.recurrent_inference(parent.hidden_state, [action])
-      node.expand(network_output, to_play, self.action_space, self.config)
+
 
       self.backpropagate(search_path, network_output.value.item(), to_play)
 
       search_paths.append(search_path)
 
-      if step_error > 0:
+      if self.step_error > 0 and len(search_paths) > 1:
 
-        pop_child = []
+        for i in range(len(search_paths)-1):
+          branch1 = search_path
+          branch2 = search_paths[i]
+          if len(branch1) == len(branch2):
 
-        for a in parent.children.keys():
-          if parent.children[a].value() != 0 and a != action:
-            v1 = node.value()
-            best_a1 = node.best_a
-            v2 = parent.children[a].value()
-            best_a2 = parent.children[a].best_a
-            while abs(v1 - v2) < step_error and best_a2 == best_a1:
-              parent.aggregation_times += 1
-              if v1 > v2:
-               pop_child.append(a)
+            branch_value_loss = 0
+            aggregation = True
+            for j in range(1,len(branch1)):
+              if branch1[j] != branch2[j]:
+                is_aggregation, value_loss = self.abstract(branch1[j], branch2[j])
+                if not is_aggregation:
+                  aggregation = False
+                  break
+                branch_value_loss += value_loss
               else:
-               pop_child.append(action)
-        pop_child = list(set(pop_child))
+                continue
 
-        for child in pop_child:
-          parent.children.pop(child)
+            if aggregation:
+              root.aggregation_times += 1
+              if branch_value_loss >= 0:
+                  delet_node = branch2[-1]
+                  for a, n in delet_node.parent.children.items():
+                    if n == delet_node:
+                      delet_node.parent.children.pop(a)
+              else:
+                delet_node = branch1[-1]
+                for a, n in delet_node.parent.children.items():
+                  if n == delet_node:
+                    delet_node.parent.children.pop(a)
 
-
-      #e = datetime.datetime.now()
-      #print(f'sim time:{(e-s).microseconds}')
     return search_paths
 
   def select_child(self, node):
@@ -259,5 +269,13 @@ class MCTS(object):
         self.min_max_stats.update(new_q)
 
       value = reward + self.discount*value
+
+  def abstract(self, node1, node2, type=1):
+    if type==1:
+      if node1.value() == node2.value() and node1.best_a == node2.best_a:
+        value_loss = node1.value() - node2.value()
+        return True, value_loss
+    else:
+      return False
 
 

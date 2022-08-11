@@ -13,7 +13,7 @@ import random
 import os
 
 
-@ray.remote
+@ray.remote(max_call=2)
 class Actor(Logger):
 
   def __init__(self, actor_key, config, storage, replay_buffer, state=None):
@@ -140,6 +140,8 @@ class Actor(Logger):
 
       legal_actions = game.environment.legal_actions()
       root.expand(initial_inference, game.to_play, legal_actions, self.config)
+      for child in root.children.values():
+        child.parent = root
       root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
       self.mcts.run(root, self.network)
