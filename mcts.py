@@ -172,11 +172,15 @@ class MCTS(object):
     self.step_error = self.config.step_error
 
     search_paths = []
+
     for _ in range(self.num_simulations):
+      if len(root.children.keys()) == 0:
+        print(len(root.children.keys()))
 
       node = root
       search_path = [node]
       to_play = root.to_play
+
 
       while node.expanded():
         action, node = self.select_child(node)
@@ -212,52 +216,55 @@ class MCTS(object):
 
             for j in range(1,len(branch1)):
               if branch1[j] != branch2[j]:
-                is_aggregation, value_loss = self.abstract(branch1[j], branch2[j], type=self.config.abstract_type)
-                if not is_aggregation:
+                if branch1[j].value() != 0 and branch2[j].value() != 0:
+                  is_aggregation, value_loss = self.abstract(branch1[j], branch2[j], type=self.config.abstract_type)
+                  if not is_aggregation:
+                    aggregation_flag = False
+                    break
+                  branch_value_loss += value_loss
+                  different_nodes[0].append(branch1[j])
+                  different_nodes[1].append(branch2[j])
+                else:
                   aggregation_flag = False
                   break
-                branch_value_loss += value_loss
-                different_nodes[0].append(branch1[j])
-                different_nodes[1].append(branch2[j])
               else:
                 continue
 
             if aggregation_flag and len(different_nodes[0]) > 0:
+               delet_key, delet_node = None, None
 
-              root.aggregation_times += len(branch1)
-              if branch_value_loss >= 0:
+               root.aggregation_times += (len(branch1)-1)
 
-                 delet_node = different_nodes[1][0]
-                 visit_count = delet_node.visit_count
-                 value_sum = delet_node.value_sum
-                 abstract_node = different_nodes[0][0]
-                 abstract_node.visit_count += visit_count
-                 abstract_node.value_sum += value_sum
-
-                 delet_paths.append(branch2)
-                 for a, n in delet_node.parent.children.items():
-                   if n == delet_node:
-                     delet_key = a
-
-                 if delet_key in delet_node.parent.children.keys():
-                   delet_node.parent.children.pop(delet_key)
+               if branch_value_loss >= 0:
+                   delet_index, abstract_index = 1, 0
+               else:
+                  delet_index, abstract_index = 0, 1
 
 
-              else:
+               delet_node = different_nodes[delet_index][0]
+               visit_count = delet_node.visit_count
+               value_sum = delet_node.value_sum
+               abstract_node = different_nodes[abstract_index][0]
+               assert abstract_node.parent == delet_node.parent
+               co_parent = delet_node.parent
+               abstract_node.visit_count += visit_count
+               abstract_node.value_sum += value_sum
 
-                delet_node = different_nodes[0][0]
-                visit_count = delet_node.visit_count
-                value_sum = delet_node.value_sum
-                abstract_node = different_nodes[1][0]
-                abstract_node.visit_count += visit_count
-                abstract_node.value_sum += value_sum
-                delet_paths.append(branch1)
-                for a, n in delet_node.parent.children.items():
-                  if n == delet_node:
-                    delet_key = a
-                if delet_key in delet_node.parent.children.keys():
-                  delet_node.parent.children.pop(delet_key)
-                break
+               for a, n in parent.children.items():
+                 if n == delet_node:
+                   delet_key = a
+                   break
+
+               if delet_key in co_parent.children.keys():
+                 delet_node.parent.children.pop(delet_key)
+
+
+               if delet_index == 1:
+                  delet_paths.append(branch2)
+               else:
+                  delet_paths.append(branch1)
+                  break
+
         for path in delet_paths:
           search_paths.remove(path)
 
