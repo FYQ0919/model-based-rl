@@ -74,8 +74,10 @@ class Config(object):
 
     if temperature:
       distribution = visit_counts ** (1/temperature)
+      if distribution.sum() == 0: print("visit count error")
 
       distribution = distribution / distribution.sum()
+
       idx = np.random.choice(len(actions), p=distribution)
     else:
       idx = np.random.choice(np.where(visit_counts == visit_counts.max())[0])

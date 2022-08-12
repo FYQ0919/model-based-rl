@@ -107,8 +107,6 @@ class Node(object):
         self.children[action] = Node(p)
         self.children[action].last_policy = policy_values
 
-
-
   def add_exploration_noise(self, dirichlet_alpha, frac):
     actions = list(self.children.keys())
     noise = np.random.dirichlet([dirichlet_alpha] * len(actions))
@@ -210,13 +208,13 @@ class MCTS(object):
           if len(branch1) == len(branch2):
 
             branch_value_loss = 0
-            aggregation = True
+            aggregation_flag = True
 
             for j in range(1,len(branch1)):
               if branch1[j] != branch2[j]:
                 is_aggregation, value_loss = self.abstract(branch1[j], branch2[j], type=self.config.abstract_type)
                 if not is_aggregation:
-                  aggregation = False
+                  aggregation_flag = False
                   break
                 branch_value_loss += value_loss
                 different_nodes[0].append(branch1[j])
@@ -224,7 +222,7 @@ class MCTS(object):
               else:
                 continue
 
-            if aggregation:
+            if aggregation_flag and len(different_nodes[0]) > 0:
 
               root.aggregation_times += len(branch1)
               if branch_value_loss >= 0:

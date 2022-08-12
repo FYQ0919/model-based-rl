@@ -202,7 +202,6 @@ class Learner(Logger):
 
     for k in aggregation_times_batch:
       aggregation_times += np.mean(k)
-    aggregation_times /= len(aggregation_times_batch)
 
     for i, action in enumerate(zip(*actions), 1):
       value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
