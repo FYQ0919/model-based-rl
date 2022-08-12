@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import math
+import scipy.stats
 import datetime
 
 
@@ -368,12 +369,53 @@ class MCTS(object):
       else:
         return True, value_loss
     elif type == 6:
-      if abs(node1.value() - node2.value()) < self.step_error:
-        value_loss = node1.value() - node2.value()
-        return True, value_loss
+      value_loss = node1.value() - node2.value()
+      q_dis1 = []
+      q_dis2 = []
+
+      if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
+        for a in node1.children.keys():
+          if a in node2.children.keys():
+            q_dis1.append(node1.children[a].value())
+            q_dis2.append(node2.children[a].value())
+
+        q_dis1 = np.exp(np.array(q_dis1))
+        q_dis2 = np.exp(np.array(q_dis2))
+
+        q_dis1 = q_dis1/np.sum(q_dis1)
+        q_dis2 = q_dis2/np.sum(q_dis2)
+
+        p = self.step_error * (1 - self.JS_loss(q_dis1, q_dis2))
+        flag = np.choice([True, False], p=[p, 1 - p])
+        return flag, value_loss
       else:
-        return False, 0
+        return True, value_loss
+    elif type == 7:
+      value_loss = node1.value() - node2.value()
+      q_dis1 = []
+      q_dis2 = []
+
+      if len(node1.children.keys()) > 0 and len(node2.children.keys()) > 0:
+        for a in node1.children.keys():
+          if a in node2.children.keys():
+            q_dis1.append(node1.children[a].value())
+            q_dis2.append(node2.children[a].value())
+
+        q_dis1 = np.array(q_dis1)/sum(q_dis1)
+        q_dis2 = np.array(q_dis2)/sum(q_dis2)
+
+        p = self.step_error*(1 - self.JS_loss(q_dis1, q_dis2))
+        flag = np.choice([True, False], p=[p, 1-p])
+        return flag, value_loss
+      else:
+        return True, value_loss
     else:
       return False, 0
+
+  def JS_loss(self, dis1, dis2):
+    average = (dis1 + dis2)/2
+
+    return 0.5*scipy.stats.entropy(average,dis1,base=2) + 0.5*scipy.stats.entropy(average,dis2,base=2)
+
 
 
