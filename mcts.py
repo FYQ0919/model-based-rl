@@ -230,11 +230,17 @@ class MCTS(object):
               if branch_value_loss >= 0:
 
                  delet_node = different_nodes[1][0]
+                 visit_count = delet_node.visit_count
+                 value_sum = delet_node.value_sum
+                 abstract_node = different_nodes[0][0]
+                 abstract_node.visit_count += visit_count
+                 abstract_node.value_sum += value_sum
 
                  delet_paths.append(branch2)
                  for a, n in delet_node.parent.children.items():
                    if n == delet_node:
                      delet_key = a
+
                  if delet_key in delet_node.parent.children.keys():
                    delet_node.parent.children.pop(delet_key)
 
@@ -242,6 +248,11 @@ class MCTS(object):
               else:
 
                 delet_node = different_nodes[0][0]
+                visit_count = delet_node.visit_count
+                value_sum = delet_node.value_sum
+                abstract_node = different_nodes[0][0]
+                abstract_node.visit_count += visit_count
+                abstract_node.value_sum += value_sum
                 delet_paths.append(branch1)
                 for a, n in delet_node.parent.children.items():
                   if n == delet_node:

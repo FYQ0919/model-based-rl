@@ -71,8 +71,10 @@ class Config(object):
   def select_action(node, temperature=0.):
     actions = list(node.children.keys())
     visit_counts = np.array([child.visit_count for child in node.children.values()])
+
     if temperature:
       distribution = visit_counts ** (1/temperature)
+
       distribution = distribution / distribution.sum()
       idx = np.random.choice(len(actions), p=distribution)
     else:
