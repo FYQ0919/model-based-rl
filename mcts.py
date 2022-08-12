@@ -250,7 +250,7 @@ class MCTS(object):
                 delet_node = different_nodes[0][0]
                 visit_count = delet_node.visit_count
                 value_sum = delet_node.value_sum
-                abstract_node = different_nodes[0][0]
+                abstract_node = different_nodes[1][0]
                 abstract_node.visit_count += visit_count
                 abstract_node.value_sum += value_sum
                 delet_paths.append(branch1)
