@@ -386,7 +386,7 @@ class MCTS(object):
         q_dis2 = q_dis2/np.sum(q_dis2)
 
         p = self.step_error * (1 - self.JS_loss(q_dis1, q_dis2))
-        flag = np.choice([True, False], p=[p, 1 - p])
+        flag = np.random.choice([True, False],size=1, p=[p, 1 - p])
         return flag, value_loss
       else:
         return True, value_loss
@@ -405,7 +405,7 @@ class MCTS(object):
         q_dis2 = np.array(q_dis2)/sum(q_dis2)
 
         p = self.step_error*(1 - self.JS_loss(q_dis1, q_dis2))
-        flag = np.choice([True, False], p=[p, 1-p])
+        flag = np.random.choice([True, False],size=1, p=[p, 1-p])
         return flag, value_loss
       else:
         return True, value_loss
