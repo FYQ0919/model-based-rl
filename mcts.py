@@ -400,17 +400,17 @@ class MCTS(object):
           if a in node2.children.keys():
             q_dis1.append(node1.children[a].value())
             q_dis2.append(node2.children[a].value())
+        if len(q_dis1) > 0 and len(q_dis2) > 0:
+          q_dis1 = (np.array(q_dis1) - min(q_dis1) + 1e-3)
+          q_dis2 = (np.array(q_dis2) - min(q_dis2) + 1e-3)
 
-        q_dis1 = (np.array(q_dis1) - min(q_dis1))
-        q_dis2 = (np.array(q_dis2) - min(q_dis2))
-        
-        q_dis1 = q_dis1 / np.sum(q_dis1)
-        q_dis2 = q_dis2 / np.sum(q_dis2)
+          q_dis1 = q_dis1 / np.sum(q_dis1)
+          q_dis2 = q_dis2 / np.sum(q_dis2)
 
 
-        p = self.step_error*(1 - np.clip(self.JS_loss(q_dis1, q_dis2),a_min=0,a_max=1))
-        flag = np.random.choice([True, False],size=1, p=[p, 1-p])
-        return flag, value_loss
+          p = self.step_error*(1 - np.clip(self.JS_loss(q_dis1, q_dis2),a_min=0,a_max=1))
+          flag = np.random.choice([True, False],size=1, p=[p, 1-p])
+          return flag, value_loss
       else:
         return True, value_loss
     else:
