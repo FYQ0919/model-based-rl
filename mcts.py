@@ -411,6 +411,8 @@ class MCTS(object):
           p = self.step_error*(1 - np.clip(self.JS_loss(q_dis1, q_dis2),a_min=0,a_max=1))
           flag = np.random.choice([True, False],size=1, p=[p, 1-p])
           return flag, value_loss
+        else:
+          return False, 0
       else:
         return True, value_loss
     else:
