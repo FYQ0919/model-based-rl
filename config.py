@@ -145,8 +145,8 @@ def make_config():
 
   # MCTS exploration
   exploration = parser.add_argument_group('exploration')
-  exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.25)
-  exploration.add_argument('--root_exploration_fraction', type=float, default=0.25)
+  exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.0005)
+  exploration.add_argument('--root_exploration_fraction', type=float, default=0.0005)
   exploration.add_argument('--init_value_score', type=float, default=0.0)
   exploration.add_argument('--known_bounds', nargs=2, type=float, default=[None, None])
 
@@ -173,9 +173,9 @@ def make_config():
   training.add_argument('--send_weights_frequency', type=int, default=500)
   training.add_argument('--weight_sync_frequency', type=int, default=1000)
   training.add_argument('--td_steps', nargs='+', type=int, default=[10])
-  training.add_argument('--batch_size', nargs='+', type=int, default=[64])
+  training.add_argument('--batch_size', nargs='+', type=int, default=[256])
   training.add_argument('--batches_per_fetch', type=int, default=15)
-  training.add_argument('--stored_before_train', type=int, default=10)
+  training.add_argument('--stored_before_train', type=int, default=1000)
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
@@ -207,7 +207,7 @@ def make_config():
 
   ### Saving and Loading
   load_and_save = parser.add_argument_group('saving and loading')
-  load_and_save.add_argument('--save_state_frequency', type=int, default=1000)
+  load_and_save.add_argument('--save_state_frequency', type=int, default=100000)
   load_and_save.add_argument('--load_state', type=str, default=None)
 
   ### Logging

@@ -170,7 +170,8 @@ class MCTS(object):
 
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
-    self.step_error = self.config.step_error
+    self.step_error = 0
+    # self.step_error = self.config.step_error
 
     search_paths = []
 
