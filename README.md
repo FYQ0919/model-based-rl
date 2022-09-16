@@ -56,6 +56,7 @@ pip install -r requirements.txt
 --fixed_temperatures 1.0 0.8 0.7 0.5 0.3 0.2 0.1 --td_steps 10 --window_size 200000 --batch_size 512 --obs_range 0 255 --norm_obs --sticky_actions 4 --noop_reset --episode_life --fire_reset --clip_rewards --group_tag my_group_tag --run_tag my_run_tag```
 
 * Tic-Tac-Toe: ```python train.py --environment tictactoe --two_players --architecture FCNetwork --num_actors 7 --fixed_temperatures 1.0 0.8 0.7 0.5 0.3 0.2 0.1 --td_steps 10 --discount 1 --known_bounds -1 1 --stored_before_train 20000 --group_tag my_group_tag --run_tag my_run_tag```
+* Curling: ```python train.py --environment Curling --architecture FCNetwork --num_actors 5 --fixed_temperatures 0.5 0.2 0.1 0.01 0 --td_steps 100 --discount 1.0 --max_history_length 1000 --group_tag 363 --run_tag curling_100_200 --two_players --num_sample_action 100 --num_simulations 200 --num_unroll_steps 3 --lr_init 0.02```
 
 See live training results with tensorboard:
 ```bash
