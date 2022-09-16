@@ -7,7 +7,6 @@ import numpy as np
 import random
 import torch
 import gym
-import gym_gomoku
 gym.logger.setLevel(40)
 
 
@@ -15,6 +14,10 @@ def get_environment(config):
     if config.environment == 'TicTacToe':
       from custom_environments.tic_tac_toe import TicTacToe
       environment = TicTacToe()
+    elif config.environment == 'Curling':
+        from curling_simulator.gym_env import CurlingTwoAgentGymEnv_v0
+        environment = CurlingTwoAgentGymEnv_v0()
+        environment = wrap_game(environment, config)
     else:
       environment = gym.make(config.environment)
       environment = wrap_game(environment, config)
@@ -45,7 +48,7 @@ def get_network(config, device=None):
       network = HopfieldNetwork(input_dim, action_space, device, config)
     elif config.architecture == 'AttentionNetwork':
       input_dim = env.observation_space.shape
-      if len(input_dim) == 1: 
+      if len(input_dim) == 1:
         input_dim = input_dim[0]
       network = AttentionNetwork(input_dim, action_space, device, config)
     else:
