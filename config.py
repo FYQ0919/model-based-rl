@@ -188,7 +188,7 @@ def make_config():
   training.add_argument('--weight_decay', type=float, default=1e-4)
 
   # Learning rate
-  training.add_argument('--lr_init', nargs='+', type=float, default=[0.0008])
+  training.add_argument('--lr_init', nargs='+', type=float, default=[0.01])
   training.add_argument('--lr_scheduler', choices=['ExponentialLR', 'MuZeroLR', 'WarmUpLR'], type=str, default=None)
   training.add_argument('--lr_decay_rate', type=float, default=0.1)
   training.add_argument('--lr_decay_steps', type=int, default=100000)
