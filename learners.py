@@ -170,6 +170,8 @@ class Learner(Logger):
     if self.config.norm_obs:
       observations = (observations - self.obs_min) / self.obs_range
     observations = torch.tensor(observations).to(self.device)
+    if len(observations.shape) < 4:
+      observations = observations.unsqueeze(1)
 
     value, reward, policy_logits, hidden_state = self.network.initial_inference(observations)
 

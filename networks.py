@@ -428,6 +428,7 @@ class MuZeroRepresentation(nn.Module):
     self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
 
   def forward(self, x):
+
     out = self.conv1(x)
     for block in self.resblocks1:
         out = block(out)
@@ -452,7 +453,7 @@ class MuZeroDynamics(nn.Module):
     self.bn = nn.BatchNorm2d(128)
     self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
 
-    self.fc1 = nn.Linear(6 * 6 * 128, 512)
+    self.fc1 = nn.Linear(128, 512)
     self.fc2 = nn.Linear(512, reward_support_size)
 
   def forward(self, x):
@@ -474,10 +475,10 @@ class MuZeroPrediction(nn.Module):
     super(MuZeroPrediction, self).__init__()
     self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
 
-    self.fc_value = nn.Linear(6 * 6 * 128, 512)
+    self.fc_value = nn.Linear(128, 512)
     self.fc_value_o = nn.Linear(512, value_support_size)
 
-    self.fc_policy = nn.Linear(6 * 6 * 128, 512)
+    self.fc_policy = nn.Linear(128, 512)
     self.fc_policy_o = nn.Linear(512, action_space)
 
   def forward(self, x):
