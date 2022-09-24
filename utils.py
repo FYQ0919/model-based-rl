@@ -28,7 +28,8 @@ def get_network(config, device=None):
     action_space = env.action_space.n
 
     if config.architecture == 'MuZeroNetwork':
-      input_channels = config.stack_obs
+      input_channels = 3
+
       if config.stack_actions:
         input_channels *= 2
       network = MuZeroNetwork(input_channels, action_space, device, config)

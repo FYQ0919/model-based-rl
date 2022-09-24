@@ -89,7 +89,8 @@ class Game(object):
 
     self.sum_rewards += self.environment.last_reward if self.clip_rewards else reward
 
-    self.step = self.environment._elapsed_steps
+    self.step = self.environment.elapsed_steps
+
     self.history_idx += 1
 
     self.terminal = self.environment.was_real_done if self.episode_life else done

@@ -413,18 +413,18 @@ class MuZeroRepresentation(nn.Module):
 
     def __init__(self, input_channels):
         super(MuZeroRepresentation, self).__init__()
-        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3, stride=2, padding=1)  # dims 48, 48
+        self.conv1 = nn.Conv2d(input_channels, 8, kernel_size=3, stride=2, padding=1)  # dims 48, 48
 
-        self.resblocks1 = nn.ModuleList([ResidualBlock(64) for _ in range(2)])
-        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)  # dims 24, 24
+        self.resblocks1 = nn.ModuleList([ResidualBlock(8) for _ in range(2)])
+        self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=1)  # dims 24, 24
 
-        self.resblocks2 = nn.ModuleList([ResidualBlock(128) for _ in range(3)])
+        self.resblocks2 = nn.ModuleList([ResidualBlock(16) for _ in range(3)])
         self.avg_pool1 = nn.AvgPool2d(kernel_size=3, stride=2, padding=1)  # dims 12, 12
 
-        self.resblocks3 = nn.ModuleList([ResidualBlock(128) for _ in range(3)])
+        self.resblocks3 = nn.ModuleList([ResidualBlock(16) for _ in range(3)])
         self.avg_pool2 = nn.AvgPool2d(kernel_size=3, stride=2, padding=1)  # dims 6, 6
 
-        self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
+        self.resblocks = nn.ModuleList([ResidualBlock(16) for _ in range(4)])
 
     def forward(self, x):
 
@@ -448,12 +448,12 @@ class MuZeroDynamics(nn.Module):
 
     def __init__(self, reward_support_size):
         super(MuZeroDynamics, self).__init__()
-        self.conv = nn.Conv2d(128 + 1, 128, kernel_size=3, stride=1, padding=1)
-        self.bn = nn.BatchNorm2d(128)
-        self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
+        self.conv = nn.Conv2d(16 + 1, 16, kernel_size=3, stride=1, padding=1)
+        self.bn = nn.BatchNorm2d(16)
+        self.resblocks = nn.ModuleList([ResidualBlock(16) for _ in range(4)])
 
-        self.fc1 = nn.Linear(128, 512)
-        self.fc2 = nn.Linear(512, reward_support_size)
+        self.fc1 = nn.Linear(16, 64)
+        self.fc2 = nn.Linear(64, reward_support_size)
 
     def forward(self, x):
         batch_size = x.size(0)
@@ -472,13 +472,13 @@ class MuZeroPrediction(nn.Module):
 
     def __init__(self, action_space, value_support_size):
         super(MuZeroPrediction, self).__init__()
-        self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
+        self.resblocks = nn.ModuleList([ResidualBlock(16) for _ in range(4)])
 
-        self.fc_value = nn.Linear(128, 512)
-        self.fc_value_o = nn.Linear(512, value_support_size)
+        self.fc_value = nn.Linear(16, 64)
+        self.fc_value_o = nn.Linear(64, value_support_size)
 
-        self.fc_policy = nn.Linear(128, 512)
-        self.fc_policy_o = nn.Linear(512, action_space)
+        self.fc_policy = nn.Linear(16, 64)
+        self.fc_policy_o = nn.Linear(64, action_space)
 
     def forward(self, x):
         batch_size = x.size(0)

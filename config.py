@@ -145,8 +145,8 @@ def make_config():
 
   # MCTS exploration
   exploration = parser.add_argument_group('exploration')
-  exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.0005)
-  exploration.add_argument('--root_exploration_fraction', type=float, default=0.0005)
+  exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.3)
+  exploration.add_argument('--root_exploration_fraction', type=float, default=0.25)
   exploration.add_argument('--init_value_score', type=float, default=0.0)
   exploration.add_argument('--known_bounds', nargs=2, type=float, default=[None, None])
 
@@ -169,7 +169,7 @@ def make_config():
   training.add_argument('--training_steps', type=int, default=10000000)
   training.add_argument('--policy_loss', type=str, default='CrossEntropyLoss')
   training.add_argument('--scalar_loss', type=str, default='MSE')
-  training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[5])
+  training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[10])
   training.add_argument('--send_weights_frequency', type=int, default=500)
   training.add_argument('--weight_sync_frequency', type=int, default=1000)
   training.add_argument('--td_steps', nargs='+', type=int, default=[10])
@@ -179,8 +179,8 @@ def make_config():
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
-  training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default='')
-  training.add_argument('--learner_gpu_device_id', type=int, default=None)
+  training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=[])
+  training.add_argument('--learner_gpu_device_id', type=int, default=0)
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
   ### Sampled Muzero
@@ -192,7 +192,7 @@ def make_config():
 
   # AbS
   training.add_argument('--step_error', type=float, default=0.1)
-  training.add_argument('--abstract_type', type=int, default=1)
+  training.add_argument('--abstract_type', type=int, default=7)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')

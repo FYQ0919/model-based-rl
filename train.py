@@ -13,6 +13,7 @@ import pytz
 import time
 import ray
 import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 
 def print_launch_message(config, date):
@@ -61,10 +62,14 @@ def print_launch_message(config, date):
 
 def launch(config, date, state=None):
   os.environ["OMP_NUM_THREADS"] = "1"
-  ray.init()
+  if torch.cuda.is_available():
+    ray.init(num_gpus=torch.cuda.device_count())
 
   env = get_environment(config)
   config.action_space = env.action_space.n
+
+  print(env.observation_space.shape)
+
   config.obs_space = env.observation_space.shape
 
   storage = SharedStorage.remote(config)

@@ -13,6 +13,7 @@ import random
 import os
 
 
+# @ray.remote(num_gpus = 0.5)
 @ray.remote
 class Actor(Logger):
 
@@ -134,14 +135,17 @@ class Actor(Logger):
       current_observation = np.float32(game.get_observation(-1))
       if self.config.norm_obs:
         current_observation = (current_observation - self.obs_min) / self.obs_range
-      current_observation = torch.from_numpy(current_observation).to(self.device)
 
-      initial_inference = self.network.initial_inference(current_observation.unsqueeze(0))
+      current_observation = torch.from_numpy(current_observation).to(self.device)
+      if len(current_observation.shape) < 4:
+        current_observation = current_observation.unsqueeze(0)
+      initial_inference = self.network.initial_inference(current_observation)
 
       legal_actions = game.environment.legal_actions()
       root.expand(initial_inference, game.to_play, legal_actions, self.config)
       for child in root.children.values():
         child.parent = root
+
       root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
       self.mcts.run(root, self.network)

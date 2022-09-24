@@ -125,6 +125,7 @@ class PrioritizedReplay():
         batch_actions = []
         idxs = []
 
+
         batch_observations = np.zeros((self.batch_size, *self.obs_space), dtype=np.float32)
         target_policies = np.zeros((self.batch_size, self.target_length, self.action_space),
                                    dtype=np.float32)
@@ -144,6 +145,7 @@ class PrioritizedReplay():
 
             priorities.append(priority)
             idxs.append(idx)
+
 
             batch_observations[batch_idx, :] = np.float32(history.observations[step])
 
