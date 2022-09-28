@@ -187,6 +187,7 @@ def make_config():
   training.add_argument('--num_sample_action', type=int, default=10)
 
   ### IBS
+  training.add_argument('--use_ibs', type=bool, default=True)
   training.add_argument('--max_r', type=float, default=1)
   training.add_argument('--min_r', type=float, default=-1)
 

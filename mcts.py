@@ -74,16 +74,19 @@ class Node(object):
 
     if sample_num > 0:
 
-      if self.last_policy != None:
+      if config.use_ibs:
+        if self.last_policy != None:
 
 
-        n_r = (self.reward - config.min_r)/ (config.max_r - config.min_r)
+          n_r = (self.reward - config.min_r)/ (config.max_r - config.min_r)
 
-        regret = config.max_r * np.ones(shape=actions.shape) - self.reward * self.last_policy
-        v_a = (n_r * np.ones(shape=actions.shape) - (n_r * np.ones(shape=actions.shape)* self.last_policy) ** 2)
-        uniform_policy = np.ones(actions.shape) / len(actions)
+          regret = config.max_r * np.ones(shape=actions.shape) - self.reward * self.last_policy
+          v_a = (n_r * np.ones(shape=actions.shape) - (n_r * np.ones(shape=actions.shape)* self.last_policy) ** 2)
+          uniform_policy = np.ones(actions.shape) / len(actions)
 
-        best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+          best_alpha, best_dis = self.golden_selection(regret, v_a, uniform_policy, policy_values)
+        else:
+          best_dis = policy_values
       else:
         best_dis = policy_values
 
@@ -170,10 +173,11 @@ class MCTS(object):
 
   def run(self, root, network):
     self.min_max_stats.reset(*self.known_bounds)
-    self.step_error = 0
-    # self.step_error = self.config.step_error
+    self.step_error = self.config.step_error
 
     search_paths = []
+
+    root.aggregation_times = 0
 
     for _ in range(self.num_simulations):
       if len(root.children.keys()) == 0:
@@ -242,7 +246,6 @@ class MCTS(object):
                else:
                   delet_index, abstract_index = 0, 1
 
-
                delet_node = different_nodes[delet_index][0]
                visit_count = delet_node.visit_count
                value_sum = delet_node.value_sum
@@ -267,8 +270,14 @@ class MCTS(object):
                   delet_paths.append(branch1)
                   break
 
+
         for path in delet_paths:
           search_paths.remove(path)
+
+    if self.step_error > 0:
+      Note = open(f'./runs/{self.config.environment}/{self.config.group_tag}/{self.config.run_tag}/aggregation.txt', mode='a+')
+      Note.write(f'{root.aggregation_times} \n')
+
 
     return search_paths
 

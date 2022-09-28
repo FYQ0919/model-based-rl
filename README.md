@@ -56,6 +56,7 @@ pip install -r requirements.txt
 --fixed_temperatures 1.0 0.8 0.7 0.5 0.3 0.2 0.1 --td_steps 10 --window_size 200000 --batch_size 512 --obs_range 0 255 --norm_obs --sticky_actions 4 --noop_reset --episode_life --fire_reset --clip_rewards --group_tag my_group_tag --run_tag my_run_tag```
 
 * Tic-Tac-Toe: ```python train.py --environment tictactoe --two_players --architecture FCNetwork --num_actors 7 --fixed_temperatures 1.0 0.8 0.7 0.5 0.3 0.2 0.1 --td_steps 10 --discount 1 --known_bounds -1 1 --stored_before_train 20000 --group_tag my_group_tag --run_tag my_run_tag```
+python train.py --environment Acrobot-v1 --architecture FCNetwork --num_actors 5  --fixed_temperatures 1.0 0.8 0.5 0.03 0.1 --td_steps 500 --num_sample_action 10 --num_simulations 20 --max_r 1 --min_r -1 --max_history_length 1000 --group_tag 30 --abstract_type 6 --run_tag IBS10_20 --seed 149 --step_error 0
 
 * Cart-Pole: ```python train.py --environment CartPole-v0 --architecture FCNetwork --num_actors 5 --fixed_temperatures 1.0 0.7 0.5 0.3 0.1 --td_steps 500 --lr_init 0.02 --seed 148 --max_history_length 1000 --group_tag 1000 --run_tag AR_50_100 --num_sample_action 50 --num_simulation 100```
 See live training results with tensorboard:

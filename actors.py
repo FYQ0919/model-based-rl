@@ -44,6 +44,8 @@ class Actor(Logger):
       self.device = torch.device("cpu")
 
     self.network = get_network(config, self.device)
+    total = sum([param.nelement() for param in self.network.parameters()])
+    print("Number of parameters: %.2fM" % (total/1e6))
     self.network.to(self.device)
     self.network.eval()
 
