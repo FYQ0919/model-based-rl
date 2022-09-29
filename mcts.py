@@ -180,8 +180,6 @@ class MCTS(object):
     root.aggregation_times = 0
 
     for _ in range(self.num_simulations):
-      if len(root.children.keys()) == 0:
-        print(len(root.children.keys()))
 
       node = root
       search_path = [node]
@@ -239,7 +237,7 @@ class MCTS(object):
             if aggregation_flag and len(different_nodes[0]) > 0:
                delet_key, delet_node = None, None
 
-               root.aggregation_times += (len(branch1)-1)
+               root.aggregation_times += 1
 
                if branch_value_loss >= 0:
                    delet_index, abstract_index = 1, 0
