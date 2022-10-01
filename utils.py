@@ -18,6 +18,8 @@ def get_environment(config):
         from curling_simulator.gym_env import CurlingTwoAgentGymEnv_v0
         environment = CurlingTwoAgentGymEnv_v0()
         environment = wrap_game(environment, config)
+        if(config.path != ''):
+          environment.initialize_img = config.bgr_img
     else:
       environment = gym.make(config.environment)
       environment = wrap_game(environment, config)
@@ -31,7 +33,8 @@ def get_network(config, device=None):
     action_space = env.action_space.n
 
     if config.architecture == 'MuZeroNetwork':
-      input_channels = config.stack_obs
+      # input_channels = config.stack_obs
+      input_channels = config.input_channel
       if config.stack_actions:
         input_channels *= 2
       network = MuZeroNetwork(input_channels, action_space, device, config)

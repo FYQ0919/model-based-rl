@@ -351,10 +351,11 @@ class StackFrames(gym.Wrapper):
         self.frames = deque([], maxlen=self.k)
 
         old_shape = env.observation_space.shape
+        print(old_shape[:-1])
         if len(old_shape) > 1:
-            env.observation_space.shape = (self.k, *old_shape[:-1])
+            env.observation_space._shape = (self.k, *old_shape[:-1])
         else:
-            env.observation_space.shape = (self.k, *old_shape)
+            env.observation_space._shape = (self.k, *old_shape)
 
     @property
     def _elapsed_steps(self):

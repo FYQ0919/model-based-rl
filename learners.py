@@ -1,5 +1,6 @@
 from utils import get_network, get_optimizer, get_lr_scheduler, get_loss_functions, set_all_seeds
 from mcts import MCTS, Node
+from elo_rating import *
 from logger import Logger
 from copy import deepcopy
 import numpy as np
@@ -23,7 +24,8 @@ class Learner(Logger):
     self.replay_buffer = replay_buffer
     self.storage = storage
     self.config = deepcopy(config)
-
+    
+        
     if "learner" in self.config.use_gpu_for:
       if torch.cuda.is_available():
         if self.config.learner_gpu_device_id is not None:
@@ -56,6 +58,8 @@ class Learner(Logger):
 
     if state is not None:
       self.load_state(state)
+      
+    self.elo_eval = [ELO_evaluator.remote(eval_key, self.config, storage, replay_buffer, state) for eval_key in range(config.num_actors)]
 
     Logger.__init__(self)
 
@@ -134,6 +138,22 @@ class Learner(Logger):
 
         if self.training_step % self.config.save_state_frequency == 0:
           self.save_state()
+          
+        if self.config.two_players and self.training_step % self.config.elo_eval_steps == 0:
+          list_ra = []
+          list_rb = []
+          print("Step:{}; ELO_rating......".format(self.training_step))
+          ray.get([eval.launch.remote() for eval in self.elo_eval])
+          for eval in self.elo_eval:
+            ra, rb = ray.get(eval.get_value.remote())
+            # print('elo_A:{} ;elo_B:{}'.format(ra,rb))
+            print('elo_A:{} '.format(ra))
+            list_ra.append(ra)
+            # list_rb.append(rb)
+          avg_ra = sum(list_ra) / len(list_ra)
+          # avg_rb = sum(list_rb) / len(list_rb)
+          self.log_scalar(tag='elo_ra', value=avg_ra, i=self.training_step)
+          # self.log_scalar(tag='elo_rb', value=avg_rb, i=self.training_step)
 
         if self.training_step % self.config.learner_log_frequency == 0:
           reward_loss = self.losses_to_log['reward'] / self.config.learner_log_frequency

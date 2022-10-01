@@ -4,6 +4,7 @@ import torch.nn as nn
 import numpy as np
 import torch
 import math
+from curling_simulator.config import * 
 
 
 NetworkOutput = namedtuple('network_output', ('value', 'reward', 'policy_logits', 'hidden_state'))
@@ -119,6 +120,7 @@ class FCPredictionPolicy(nn.Module):
     return self.policy(x)
 
 
+#using
 class FCNetwork(BaseNetwork):
 
   def __init__(self, input_dim, action_space, device, config):
@@ -179,7 +181,7 @@ class FCNetwork(BaseNetwork):
   def get_weights(self):
     return {key: value.cpu() for key, value in self.state_dict().items()}
 
-
+#?
 class AttentionRepresentation(nn.Module):
 
   def __init__(self, input_dim, out_dim, config):
@@ -441,6 +443,7 @@ class MuZeroRepresentation(nn.Module):
 
     for block in self.resblocks:
         out = block(out)
+    # print('repre',out.shape)
     return out
 
 
@@ -452,7 +455,8 @@ class MuZeroDynamics(nn.Module):
     self.bn = nn.BatchNorm2d(128)
     self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
 
-    self.fc1 = nn.Linear(6 * 6 * 128, 512)
+    # self.fc1 = nn.Linear(6 * 6 * 128, 512)
+    self.fc1 = nn.Linear(int(128*network_input_size[1]/16*network_input_size[2]/16), 512)
     self.fc2 = nn.Linear(512, reward_support_size)
 
   def forward(self, x):
@@ -474,10 +478,12 @@ class MuZeroPrediction(nn.Module):
     super(MuZeroPrediction, self).__init__()
     self.resblocks = nn.ModuleList([ResidualBlock(128) for _ in range(16)])
 
-    self.fc_value = nn.Linear(6 * 6 * 128, 512)
+    # self.fc_value = nn.Linear(6 * 6 * 128, 512)
+    self.fc_value = nn.Linear(int(128*network_input_size[1]/16*network_input_size[2]/16), 512)
     self.fc_value_o = nn.Linear(512, value_support_size)
 
-    self.fc_policy = nn.Linear(6 * 6 * 128, 512)
+    # self.fc_policy = nn.Linear(6 * 6 * 128, 512)
+    self.fc_policy = nn.Linear(int(128*network_input_size[1]/16*network_input_size[2]/16), 512)
     self.fc_policy_o = nn.Linear(512, action_space)
 
   def forward(self, x):
@@ -486,6 +492,7 @@ class MuZeroPrediction(nn.Module):
     for block in self.resblocks:
         out = block(out)
     out = out.view(batch_size, -1)
+    # print(out.shape)
 
     value = F.relu(self.fc_value(out))
     value = self.fc_value_o(value)
@@ -495,6 +502,8 @@ class MuZeroPrediction(nn.Module):
     return policy, value
 
 
+
+# ?
 class MuZeroNetwork(BaseNetwork):
 
   def __init__(self, input_channels, action_space, device, config):

@@ -1,4 +1,5 @@
 from utils import get_network, get_environment, set_all_seeds
+from elo_rating import *
 from collections import defaultdict
 from mcts import MCTS, Node
 from logger import Logger
@@ -29,6 +30,9 @@ class Actor(Logger):
     self.environment = get_environment(config)
     self.environment.seed(config.seed)
     self.mcts = MCTS(config)
+    
+    self.ra = self.config.default_score
+    self.rb = self.config.default_score
 
     if "actors" in self.config.use_gpu_for:
       if torch.cuda.is_available():
@@ -120,6 +124,15 @@ class Actor(Logger):
         value_dict = {key:value/100 for key, value in self.stats_to_log.items()}
         self.log_scalars(group_tag='games/stats', value_dict=value_dict, i=self.games_played)
         self.stats_to_log = defaultdict(int)
+        
+      # if self.actor_key==1 and self.config.two_players and self.games_played % self.config.elo_eval_steps == 0:
+      #   if game.history.rewards[-1] > 0:
+      #     self.ra, self.rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
+      #   else:
+      #     self.ra, self.rb = compute_elo_rating(winner=0, ra=self.ra, rb=self.rb)
+      #   print('elo_A:{} ;elo_B:{}'.format(self.ra,self.rb))
+
+        
 
     self.sync_weights(force=True)
 

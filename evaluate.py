@@ -501,6 +501,6 @@ if __name__ == '__main__':
 
     if args.plot_summary:
         wm = plt.get_current_fig_manager()
-        wm.window.state('zoomed')
+        # wm.window.state('zoomed')
+        wm.full_screen_toggle()
         plt.show()
-

@@ -13,6 +13,7 @@ import pytz
 import time
 import ray
 import os
+import cv2
 
 
 def print_launch_message(config, date):
@@ -58,11 +59,16 @@ def print_launch_message(config, date):
     print("   - with dynamic temperatures: {}".format(config.visit_softmax_temperatures))
     print("   - changing at training steps: {}".format(config.visit_softmax_steps))
   print("\033[92mLaunching...\033[0m\n")
+  if(config.path != ''):
+    print("[Reset] 从残局初始化")
+  
 
 def launch(config, date, state=None):
   os.environ["OMP_NUM_THREADS"] = "1"
   ray.init()
 
+  if(config.path != ''):
+    config.bgr_img = cv2.imread(config.path)
   env = get_environment(config)
   config.action_space = env.action_space.n
   config.obs_space = env.observation_space.shape

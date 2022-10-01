@@ -12,6 +12,9 @@ class SharedStorage(object):
   def get_weights(self, games, actor_key):
     self.stats['actor_games'][actor_key] = games
     return self.weights, self.stats['training_step']
+  
+  def get_elo_weights(self):
+    return self.weights, self.stats['training_step']
 
   def store_weights(self, weights, step):
     self.stats['training_step'] = step

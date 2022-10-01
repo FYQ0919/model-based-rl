@@ -2,6 +2,7 @@ import argparse
 from game import Game
 import numpy as np
 import torch
+import cv2
 
 
 class Config(object):
@@ -109,12 +110,13 @@ def make_config():
   ### Environment
   environment = parser.add_argument_group('environment')
   environment.add_argument('--environment', type=str, default='LunarLander-v2')
-  environment.add_argument('--two_players', action='store_true')
+  environment.add_argument('--two_players', action='store_true', default=True)
 
   # Environment Modifications
   environment_modifications = parser.add_argument_group('general environment modifications')
   environment_modifications.add_argument('--clip_rewards', action='store_true')
   environment_modifications.add_argument('--stack_obs', type=int, default=1)
+  environment_modifications.add_argument('--input_channel', type=int, default=29)
   environment_modifications.add_argument('--obs_range', nargs='+', type=float, default=None)
   environment_modifications.add_argument('--norm_obs', action='store_true')
   environment_modifications.add_argument('--sticky_actions', type=int, default=1)
@@ -175,9 +177,9 @@ def make_config():
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
-  training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default='')
-  training.add_argument('--learner_gpu_device_id', type=int, default=None)
-  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
+  training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=[])
+  training.add_argument('--learner_gpu_device_id', type=int, default=0)
+  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=1)
 
   ### Sampled Muzero
   training.add_argument('--num_sample_action', type=int, default=0)
@@ -211,6 +213,21 @@ def make_config():
   ### Debugging
   debug = parser.add_argument_group('debugging')
   debug.add_argument('--debug', action='store_true')
+  
+  #initialize position
+  path = parser.add_argument_group('initialize_pic_path')
+  path.add_argument('--path', type=str, default='')
+  
+  #elo rating
+  elo_para = parser.add_argument_group('parameters for elo evaluation')
+  # elo_para.add_argument('--adjust_steps', type=int, default=100)
+  # elo_para.add_argument('--fast_eval_steps', type=int, default=5)
+  elo_para.add_argument('--elo_eval_steps', type=int, default=10000)
+  elo_para.add_argument('--default_score', type=float, default=0.0)
+  elo_para.add_argument('--c_elo', type=float, default=1.0/400.0)
+  elo_para.add_argument('--elo_k1', type=float, default=32.0)
+  elo_para.add_argument('--elo_k2', type=float, default=32.0)
+
 
   args = parser.parse_args()
 
