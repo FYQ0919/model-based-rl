@@ -65,7 +65,7 @@ def print_launch_message(config, date):
 
 def launch(config, date, state=None):
   os.environ["OMP_NUM_THREADS"] = "1"
-  ray.init()
+  ray.init(num_gpus=4)
 
   if(config.path != ''):
     config.bgr_img = cv2.imread(config.path)
