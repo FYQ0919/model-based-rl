@@ -12,7 +12,8 @@ import ray
 import os
 
 
-@ray.remote
+# @ray.remote
+@ray.remote(num_gpus=0.5)
 class Learner(Logger):
 
   def __init__(self, config, storage, replay_buffer, state=None):

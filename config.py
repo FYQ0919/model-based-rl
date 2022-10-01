@@ -177,7 +177,7 @@ def make_config():
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
-  training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=[])
+  training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=['actors', 'learner'])
   training.add_argument('--learner_gpu_device_id', type=int, default=0)
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=1)
 

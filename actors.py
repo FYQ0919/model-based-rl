@@ -14,7 +14,8 @@ import random
 import os
 
 
-@ray.remote
+# @ray.remote
+@ray.remote(num_gpus=0.5)
 class Actor(Logger):
 
   def __init__(self, actor_key, config, storage, replay_buffer, state=None):
