@@ -1,3 +1,5 @@
+from pickletools import read_long1
+from curling_simulator.config import R
 from utils import get_network, get_environment, set_all_seeds
 from collections import defaultdict
 from mcts import MCTS, Node
@@ -159,8 +161,20 @@ class ELO_evaluator(Logger):
 
     game = self.config.new_game(self.environment)
     _ = game.environment.reset()
-
-    self.play_game(game)
+    
+    ra_list = []
+    rb_list = []
+    for i in range(self.config.elo_eval_game_num):
+      ra, rb = self.play_game(game)
+      ra_list.append(ra)
+      rb_list.append(rb)
+    self.ra = sum(ra_list) / len(ra_list)
+    self.rb = sum(rb_list) / len(rb_list)
+    
+    if self.ra > self.record_ra:
+      self.old_network.load_state_dict(self.curr_network.state_dict())
+    self.record_ra = self.ra
+    self.record_rb = self.rb
       
     # if game.history.rewards[-1] > 0:
     #   self.ra, self.rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
@@ -200,72 +214,75 @@ class ELO_evaluator(Logger):
       game.apply(action)
       game.store_search_statistics(root)
       
-      if game.history.rewards[-1] > 0:
-        self.ra, self.rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
+      if game.history.rewards[-1] > 0: #player_B wins
+        ra, rb = compute_elo_rating(winner=0, ra=self.ra, rb=self.rb)
         # self.record_ra = self.ra
         # self.record_rb = self.rb
       else:
-        self.ra, self.rb = compute_elo_rating(winner=0, ra=self.ra, rb=self.rb)
+        ra, rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
         # self.old_network.load_state_dict(self.curr_network.state_dict())
         # self.record_ra = self.ra
         # self.record_rb = self.rb
     
     else:
-      while not game.terminal:
-        if game.environment.curr_player.value == 0:
-          # print('curr')
-          use_net = self.curr_network
+      ra_list = []
+      rb_list = []
+      for i in range(2):
+        _ = game.environment.reset()
+        while not game.terminal:
+          if game.environment.curr_player.value == i:
+            # print('curr')
+            use_net = self.curr_network
+          else:
+            # print('old')
+            use_net = self.old_network
+          root = Node(0)
+
+          current_observation = np.float32(game.get_observation(-1))
+          if self.config.norm_obs:
+            current_observation = (current_observation - self.obs_min) / self.obs_range
+          current_observation = torch.from_numpy(current_observation).to(self.device)
+
+          initial_inference = use_net.initial_inference(current_observation.unsqueeze(0))
+
+          legal_actions = game.environment.legal_actions()
+          root.expand(initial_inference, game.to_play, legal_actions, self.config)
+          root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
+
+          self.mcts.run(root, use_net)
+
+          error = root.value() - initial_inference.value.item()
+          game.history.errors.append(error)
+
+          action = self.config.select_action(root, self.temperature)
+
+          game.apply(action)
+          game.store_search_statistics(root)
+
+          # self.experiences_collected += 1
+
+          # if self.experiences_collected % self.config.weight_sync_frequency == 0:
+          #   self.sync_weights()
+        if game.history.rewards[-1] > 0: #player_B wins
+          ra, rb = compute_elo_rating(winner=1 - i, ra=self.record_ra, rb=self.record_rb)
+          # self.record_ra = self.ra
+          # self.record_rb = self.rb
         else:
-          # print('old')
-          use_net = self.old_network
-        root = Node(0)
+          ra, rb = compute_elo_rating(winner=0 + i, ra=self.record_ra, rb=self.record_rb)
+          self.old_network.load_state_dict(self.curr_network.state_dict())
+          # self.record_ra = self.ra
+          # self.record_rb = self.rb
+          
+        ra_list.append(ra)
+        rb_list.append(rb) 
 
-        current_observation = np.float32(game.get_observation(-1))
-        if self.config.norm_obs:
-          current_observation = (current_observation - self.obs_min) / self.obs_range
-        current_observation = torch.from_numpy(current_observation).to(self.device)
-
-        initial_inference = use_net.initial_inference(current_observation.unsqueeze(0))
-
-        legal_actions = game.environment.legal_actions()
-        root.expand(initial_inference, game.to_play, legal_actions, self.config)
-        root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
-
-        self.mcts.run(root, use_net)
-
-        error = root.value() - initial_inference.value.item()
-        game.history.errors.append(error)
-
-        action = self.config.select_action(root, self.temperature)
-
-        game.apply(action)
-        game.store_search_statistics(root)
-
-        # self.experiences_collected += 1
-
-        # if self.experiences_collected % self.config.weight_sync_frequency == 0:
-        #   self.sync_weights()
-
-        if game.step >= self.config.max_steps:
-          self.environment.was_real_done = True
-          break
-      
-      print(game.history.rewards[-1])
-      print(game.info)
-      if game.history.rewards[-1] > 0:
-        self.ra, self.rb = compute_elo_rating(winner=1, ra=self.record_ra, rb=self.record_rb)
-        self.record_ra = self.ra
-        self.record_rb = self.rb
-      else:
-        self.ra, self.rb = compute_elo_rating(winner=0, ra=self.record_ra, rb=self.record_rb)
-        self.old_network.load_state_dict(self.curr_network.state_dict())
-        self.record_ra = self.ra
-        self.record_rb = self.rb
-
-      # self.rb = self.ra
-
+      ra = sum(ra_list) / len(ra_list)
+      rb = sum(rb_list) / len(rb_list)
+        
     if self.config.two_players:
       self.stats_to_log[game.info["result"]] += 1
+      
+    return ra, rb
 
   def launch(self):
     with torch.inference_mode():

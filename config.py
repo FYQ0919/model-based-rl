@@ -110,13 +110,14 @@ def make_config():
   ### Environment
   environment = parser.add_argument_group('environment')
   environment.add_argument('--environment', type=str, default='LunarLander-v2')
-  environment.add_argument('--two_players', action='store_true', default=True)
+  environment.add_argument('--two_players', action='store_true')
+  environment.add_argument('--render', action='store_true')
 
   # Environment Modifications
   environment_modifications = parser.add_argument_group('general environment modifications')
   environment_modifications.add_argument('--clip_rewards', action='store_true')
   environment_modifications.add_argument('--stack_obs', type=int, default=1)
-  environment_modifications.add_argument('--input_channel', type=int, default=29)
+  environment_modifications.add_argument('--input_channel', type=int, default=21)
   environment_modifications.add_argument('--obs_range', nargs='+', type=float, default=None)
   environment_modifications.add_argument('--norm_obs', action='store_true')
   environment_modifications.add_argument('--sticky_actions', type=int, default=1)
@@ -179,7 +180,7 @@ def make_config():
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
   training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=['actors', 'learner'])
   training.add_argument('--learner_gpu_device_id', type=int, default=0)
-  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=1)
+  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[0,0,0,0])
 
   ### Sampled Muzero
   training.add_argument('--num_sample_action', type=int, default=0)
@@ -197,7 +198,7 @@ def make_config():
 
   ### Saving and Loading
   load_and_save = parser.add_argument_group('saving and loading')
-  load_and_save.add_argument('--save_state_frequency', type=int, default=1000)
+  load_and_save.add_argument('--save_state_frequency', type=int, default=10000)
   load_and_save.add_argument('--load_state', type=str, default=None)
 
   ### Logging
@@ -227,6 +228,7 @@ def make_config():
   elo_para.add_argument('--c_elo', type=float, default=1.0/400.0)
   elo_para.add_argument('--elo_k1', type=float, default=32.0)
   elo_para.add_argument('--elo_k2', type=float, default=32.0)
+  elo_para.add_argument('--elo_eval_game_num', type=int, default=1)
 
 
   args = parser.parse_args()
