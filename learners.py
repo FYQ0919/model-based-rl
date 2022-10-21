@@ -149,7 +149,7 @@ class Learner(Logger):
           self.log_scalar(tag='loss/reward', value=reward_loss, i=self.training_step)
           self.log_scalar(tag='loss/value', value=value_loss, i=self.training_step)
           self.log_scalar(tag='loss/policy', value=policy_loss, i=self.training_step)
-          self.log_scalar(tag='loss/aggregation_times', value=policy_loss, i=self.training_step)
+          self.log_scalar(tag='loss/aggregation_times', value=aggregation_times, i=self.training_step)
           self.log_throughput()
 
           if self.lr_scheduler is not None:
