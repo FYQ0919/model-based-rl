@@ -69,7 +69,7 @@ def compute_elo_rating(winner: int, ra=0, rb=0) -> float:
 
 
 
-@ray.remote
+@ray.remote(num_gpus=0.25)
 class ELO_evaluator(Logger):
 
   def __init__(self, eval_key, config, storage, replay_buffer, state=None):
@@ -80,17 +80,22 @@ class ELO_evaluator(Logger):
     self.config = deepcopy(config)
     self.eval_key = eval_key
     self.storage = storage
-    self.replay_buffer = replay_buffer
+    # self.replay_buffer = replay_buffer
     # self.config.render = False
 
     self.environment = get_environment(self.config)
     self.environment.seed(self.config.seed)
     self.mcts = MCTS(self.config)
     
-    self.ra = self.config.default_score
-    self.rb = self.config.default_score
-    self.record_ra = self.ra
-    self.record_rb = self.rb
+    self.ra_offen = self.config.default_score
+    self.ra_defen = self.config.default_score
+    self.rb_offen = self.config.default_score
+    self.rb_defen = self.config.default_score
+
+    self.record_ra_offen = self.ra_offen
+    self.record_ra_defen = self.ra_defen
+    self.record_rb_defen = self.rb_defen
+    self.record_rb_offen = self.rb_offen
     
     if self.config.fixed_temperatures:
       self.temperature = self.config.fixed_temperatures[self.eval_key]
@@ -138,7 +143,7 @@ class ELO_evaluator(Logger):
     Logger.__init__(self)
     
   def get_value(self):
-    return self.ra, self.rb
+    return self.ra_offen, self.rb_offen, self.ra_defen, self.rb_defen
 
   def load_state(self, state):
     self.run_tag = os.path.join(self.run_tag, 'resumed', '{}'.format(state['training_step']))
@@ -162,20 +167,28 @@ class ELO_evaluator(Logger):
     game = self.config.new_game(self.environment)
     _ = game.environment.reset()
     
-    ra_list = []
-    rb_list = []
+    ra_offen_list = []
+    rb_offen_list = []
+    ra_defen_list = []
+    rb_defen_list = []
     for i in range(self.config.elo_eval_game_num):
-      ra, rb = self.play_game(game)
-      ra_list.append(ra)
-      rb_list.append(rb)
-    self.ra = sum(ra_list) / len(ra_list)
-    self.rb = sum(rb_list) / len(rb_list)
+      ra_0, rb_0, ra_1, rb_1 = self.play_game(game)
+      ra_offen_list.append(ra_0)
+      rb_offen_list.append(rb_0)
+      ra_defen_list.append(ra_1)
+      rb_defen_list.append(rb_1)
+    self.ra_offen = sum(ra_offen_list) / len(ra_offen_list)
+    self.rb_offen = sum(rb_offen_list) / len(rb_offen_list)
+    self.ra_defen = sum(ra_defen_list) / len(ra_defen_list)
+    self.rb_defen = sum(rb_defen_list) / len(rb_defen_list)
     
-    if self.ra > self.record_ra:
-      self.old_network.load_state_dict(self.curr_network.state_dict())
-    self.record_ra = self.ra
-    self.record_rb = self.rb
-      
+    # if self.ra_offen > self.record_ra_offen:
+    self.old_network.load_state_dict(self.curr_network.state_dict())
+    self.record_ra_offen = self.ra_offen
+    self.record_rb_offen = self.rb_offen
+    self.record_ra_defen = self.ra_defen
+    self.record_rb_defen = self.rb_defen
+    
     # if game.history.rewards[-1] > 0:
     #   self.ra, self.rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
     # else:
@@ -186,6 +199,11 @@ class ELO_evaluator(Logger):
     self.sync_weights(force=True)
 
   def play_game(self, game):
+    ra_0 = 0
+    ra_1 = 0
+    rb_0 = 0
+    rb_1 = 0
+    
     if not self.config.fixed_temperatures:
       self.temperature = self.config.visit_softmax_temperature(self.training_step)
 
@@ -215,11 +233,11 @@ class ELO_evaluator(Logger):
       game.store_search_statistics(root)
       
       if game.history.rewards[-1] > 0: #player_B wins
-        ra, rb = compute_elo_rating(winner=0, ra=self.ra, rb=self.rb)
+        ra_1, rb_1 = compute_elo_rating(winner=0, ra=self.ra_defen, rb=self.rb_defen)
         # self.record_ra = self.ra
         # self.record_rb = self.rb
       else:
-        ra, rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
+        ra_1, rb_1 = compute_elo_rating(winner=1, ra=self.ra_defen, rb=self.rb_defen)
         # self.old_network.load_state_dict(self.curr_network.state_dict())
         # self.record_ra = self.ra
         # self.record_rb = self.rb
@@ -247,7 +265,7 @@ class ELO_evaluator(Logger):
 
           legal_actions = game.environment.legal_actions()
           root.expand(initial_inference, game.to_play, legal_actions, self.config)
-          root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
+          # root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
           self.mcts.run(root, use_net)
 
@@ -263,26 +281,42 @@ class ELO_evaluator(Logger):
 
           # if self.experiences_collected % self.config.weight_sync_frequency == 0:
           #   self.sync_weights()
-        if game.history.rewards[-1] > 0: #player_B wins
-          ra, rb = compute_elo_rating(winner=1 - i, ra=self.record_ra, rb=self.record_rb)
-          # self.record_ra = self.ra
-          # self.record_rb = self.rb
+        if i==0:
+          if game.history.rewards[-1] > 0: #player_B wins
+            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_offen, rb=self.record_rb_offen)
+            # self.record_ra = self.ra
+            # self.record_rb = self.rb
+          else:
+            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_offen, rb=self.record_rb_offen)
+            # self.old_network.load_state_dict(self.curr_network.state_dict())
+            # self.record_ra = self.ra
+            # self.record_rb = self.rb
+        
         else:
-          ra, rb = compute_elo_rating(winner=0 + i, ra=self.record_ra, rb=self.record_rb)
-          self.old_network.load_state_dict(self.curr_network.state_dict())
-          # self.record_ra = self.ra
-          # self.record_rb = self.rb
-          
-        ra_list.append(ra)
-        rb_list.append(rb) 
+          if game.history.rewards[-1] > 0: #player_B wins
+            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_defen, rb=self.record_rb_defen)
+            # self.record_ra = self.ra
+            # self.record_rb = self.rb
+          else:
+            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_defen, rb=self.record_rb_defen)
+            # self.old_network.load_state_dict(self.curr_network.state_dict())
+            # self.record_ra = self.ra
+            # self.record_rb = self.rb
+        
+        if i==0:
+          ra_0, rb_0 = ra, rb
+        else:
+          ra_1, rb_1 = ra, rb
+        # ra_list.append(ra)
+        # rb_list.append(rb) 
 
-      ra = sum(ra_list) / len(ra_list)
-      rb = sum(rb_list) / len(rb_list)
+      # ra = sum(ra_list) / len(ra_list)
+      # rb = sum(rb_list) / len(rb_list)
         
     if self.config.two_players:
       self.stats_to_log[game.info["result"]] += 1
       
-    return ra, rb
+    return ra_0, rb_0, ra_1, rb_1
 
   def launch(self):
     with torch.inference_mode():

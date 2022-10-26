@@ -10,6 +10,7 @@ import time
 import pytz
 import ray
 import os
+import traceback
 
 
 # @ray.remote
@@ -131,6 +132,14 @@ class Learner(Logger):
         ready_batches, not_ready_batches = ray.wait(not_ready_batches, num_returns=1)
 
         batch = ray.get(ready_batches[0])
+
+        # try:
+        #   batch = ray.get(ready_batches[0])
+        # except:
+        #   traceback.print_exc()
+        #   print(ready_batches)
+        #   continue
+        
         self.update_weights(batch)
         self.training_step += 1
 
@@ -141,19 +150,25 @@ class Learner(Logger):
           self.save_state()
           
         if self.config.two_players and self.training_step % self.config.elo_eval_steps == 0:
-          list_ra = []
-          list_rb = []
+          list_ra_0 = []
+          # list_rb_0 = []
+          list_ra_1 = []
+          # list_rb_1 = []
           print("Step:{}; ELO_rating......".format(self.training_step))
           ray.get([eval.launch.remote() for eval in self.elo_eval])
           for eval in self.elo_eval:
-            ra, rb = ray.get(eval.get_value.remote())
+            ra_0, rb_0, rb_1, rb_1 = ray.get(eval.get_value.remote())
             # print('elo_A:{} ;elo_B:{}'.format(ra,rb))
-            print('elo_A:{} '.format(ra))
-            list_ra.append(ra)
+            print('elo_A_offen:{} '.format(ra_0))
+            print('elo_A_defen:{} '.format(ra_1))
+            list_ra_0.append(ra_0)
+            list_ra_1.append(ra_1)
             # list_rb.append(rb)
-          avg_ra = sum(list_ra) / len(list_ra)
+          avg_ra_offen = sum(list_ra_0) / len(list_ra_0)
+          avg_ra_defen = sum(list_ra_1) / len(list_ra_1)
           # avg_rb = sum(list_rb) / len(list_rb)
-          self.log_scalar(tag='elo_ra', value=avg_ra, i=self.training_step)
+          self.log_scalar(tag='elo_ra_offen', value=avg_ra_offen, i=self.training_step)
+          self.log_scalar(tag='elo_ra_defen', value=avg_ra_defen, i=self.training_step)
           # self.log_scalar(tag='elo_rb', value=avg_rb, i=self.training_step)
 
         if self.training_step % self.config.learner_log_frequency == 0:
@@ -202,6 +217,13 @@ class Learner(Logger):
 
       init_value = self.config.inverse_value_transform(value) if not self.config.no_support else value
       new_errors = (init_value.squeeze() - target_values[:, 0]).cpu().numpy()
+      
+      if abs(sum(new_errors)) >= 0:
+        pass
+      else:
+        print('new_update_wrong......')
+        print(init_value.squeeze(), value)
+        
       self.replay_buffer.update.remote(idxs, new_errors)
 
       if not self.config.no_target_transform:
@@ -214,6 +236,11 @@ class Learner(Logger):
 
     reward_loss = 0
     value_loss = self.scalar_loss_fn(value.squeeze(), target_values[:, 0])
+    
+    if value.any() == float('inf') or target_values.any() == float('inf'):
+      print(value[value==float('inf')])
+      print(target_values[target_values==float('inf')])
+      
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
 
     for i, action in enumerate(zip(*actions), 1):
@@ -237,6 +264,13 @@ class Learner(Logger):
     self.optimizer.zero_grad()
 
     full_weighted_loss.backward()
+    
+    if full_weighted_loss.isnan().any():
+      print('backward_grad wrong')
+      print(full_weighted_loss.grad)
+      print(full_weighted_loss)
+      print(is_weights)
+      print(reward_loss, value_loss, policy_loss)
 
     if self.config.clip_grad:
       torch.nn.utils.clip_grad_norm_(self.network.parameters(), self.config.clip_grad)
