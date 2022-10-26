@@ -281,24 +281,25 @@ class ELO_evaluator(Logger):
 
           # if self.experiences_collected % self.config.weight_sync_frequency == 0:
           #   self.sync_weights()
-        if i==0:
+          
+        if i==0:#offensive
           if game.history.rewards[-1] > 0: #player_B wins
-            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_offen, rb=self.record_rb_offen)
+            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_defen, rb=self.record_rb_defen)
             # self.record_ra = self.ra
             # self.record_rb = self.rb
           else:
-            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_offen, rb=self.record_rb_offen)
+            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_defen, rb=self.record_rb_defen)
             # self.old_network.load_state_dict(self.curr_network.state_dict())
             # self.record_ra = self.ra
             # self.record_rb = self.rb
         
-        else:
+        else:#defensive
           if game.history.rewards[-1] > 0: #player_B wins
-            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_defen, rb=self.record_rb_defen)
+            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_offen, rb=self.record_rb_offen)
             # self.record_ra = self.ra
             # self.record_rb = self.rb
           else:
-            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_defen, rb=self.record_rb_defen)
+            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_offen, rb=self.record_rb_offen)
             # self.old_network.load_state_dict(self.curr_network.state_dict())
             # self.record_ra = self.ra
             # self.record_rb = self.rb
