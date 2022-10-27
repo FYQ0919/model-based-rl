@@ -157,7 +157,7 @@ class Learner(Logger):
           print("Step:{}; ELO_rating......".format(self.training_step))
           ray.get([eval.launch.remote() for eval in self.elo_eval])
           for eval in self.elo_eval:
-            ra_0, rb_0, rb_1, rb_1 = ray.get(eval.get_value.remote())
+            ra_0, rb_0, ra_1, rb_1 = ray.get(eval.get_value.remote())
             # print('elo_A:{} ;elo_B:{}'.format(ra,rb))
             print('elo_A_offen:{} '.format(ra_0))
             print('elo_A_defen:{} '.format(ra_1))
