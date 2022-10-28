@@ -71,8 +71,49 @@ class CurlingTwoAgentGymEnv_v0(gym.Env, CurlingSimuOneEndEnv):
 
         # return obs.astype(np.float32)
 
-        obs = self.feature_img(self.curr_player)
+        # obs = self.feature_img(self.curr_player)
+        obs = self.simplified_feature_img(self.curr_player)
         return obs
+    
+    def simplified_feature_img(self, player: Player):
+        def distance(stone):
+            stone = np.resize(stone, (1, 2))
+            return np.linalg.norm(center_pos-stone)
+
+        # 先后手信息, 算法可以确定是哪一个agent
+        is_first_vec = player.value
+        feat = np.zeros(network_input_size, dtype=np.float32)
+        
+        if is_first_vec == 0:#curr Player A
+            self_stones = self.observe_stones_pos(Player.A)
+            oppo_stones = self.observe_stones_pos(Player.B)
+        else:
+            self_stones = self.observe_stones_pos(Player.B)
+            oppo_stones = self.observe_stones_pos(Player.A)
+            
+        for i in range(self_stones.shape[0]):
+            if(self_stones[i,0] != invalid_fill_value):
+                h, w = self.position2point(self_stones[i])#all
+                feat[0,h,w] = 1
+                
+                dis = distance(self_stones[i])
+                if dis <= r4:#in house
+                    h, w = self.position2point(self_stones[i])
+                    feat[2,h,w] = 1
+                    
+        for i in range(oppo_stones.shape[0]):
+            if(oppo_stones[i,0] != invalid_fill_value):
+                h, w = self.position2point(oppo_stones[i])#all
+                feat[1,h,w] = 1
+                
+                dis = distance(oppo_stones[i])#in house
+                if dis <= r4:
+                    h, w = self.position2point(oppo_stones[i])
+                    feat[3,h,w] = 1
+        
+        return feat
+        
+        
 
 
     def feature_img(self, player: Player):
@@ -80,17 +121,20 @@ class CurlingTwoAgentGymEnv_v0(gym.Env, CurlingSimuOneEndEnv):
             stone = np.resize(stone, (1, 2))
             return np.linalg.norm(center_pos-stone)
 
+        # 先后手信息, 算法可以确定是哪一个agent
+        is_first_vec = player.value
+        
         feat = np.zeros(network_input_size, dtype=np.float32)
         feat[2,:,:] = 1
         #ones
         feat[3,:,:] = 1
 
-        A_stones = self.observe_stones_pos(Player.A)
-        B_stones = self.observe_stones_pos(Player.B)
-        # A_stones = np.array(A_stones)
-        # B_stones = np.array(B_stones)
-        # print(A_stones)
-        # print(B_stones)
+        if is_first_vec == 0:#curr Player A
+            A_stones = self.observe_stones_pos(Player.A)
+            B_stones = self.observe_stones_pos(Player.B)
+        else:
+            A_stones = self.observe_stones_pos(Player.B)
+            B_stones = self.observe_stones_pos(Player.A)
 
         #stone color
         for i in range(A_stones.shape[0]):
@@ -104,11 +148,10 @@ class CurlingTwoAgentGymEnv_v0(gym.Env, CurlingSimuOneEndEnv):
                 feat[1,h,w] = 1
                 feat[2,h,w] = 0
 
+
         #turn num
         # 获取当前shot的轮数
         curr_turn_vec = np.array([self.curr_shot // 2], dtype=np.float32) # -2?
-        # 先后手信息, 算法可以确定是哪一个agent
-        is_first_vec = player.value
         if(curr_turn_vec==0):
             feat[4 + is_first_vec*4,:,:] = 1
         elif(curr_turn_vec==1):
@@ -152,27 +195,34 @@ class CurlingTwoAgentGymEnv_v0(gym.Env, CurlingSimuOneEndEnv):
         B_valid.sort(key = distance)
         total_valid.sort(key = distance)
 
-        for i in range(len(A_valid)):
-            h, w = self.position2point(A_valid[i])
-            if i<4:
-                feat[13 + i,h,w] = 1
-            else:
-                feat[16,h,w] = 1
+        # for i in range(len(A_valid)):
+        #     h, w = self.position2point(A_valid[i])
+        #     if i<4:
+        #         feat[13 + i,h,w] = 1
+        #     else:
+        #         feat[16,h,w] = 1
         
-        for i in range(len(B_valid)):
-            h, w = self.position2point(B_valid[i])
-            if i<4:
-                feat[17 + i,h,w] = 1
-            else:
-                feat[20,h,w] = 1
+        # for i in range(len(B_valid)):
+        #     h, w = self.position2point(B_valid[i])
+        #     if i<4:
+        #         feat[17 + i,h,w] = 1
+        #     else:
+        #         feat[20,h,w] = 1
 
         for i in range(len(total_valid)):
             h, w = self.position2point(total_valid[i])
             if i<8:
-                feat[21 + i,h,w] = 1
+                feat[13 + i,h,w] = 1
             else:
-                feat[28,h,w] = 1
+                feat[20,h,w] = 1
 
+        if np.sum(feat)>=-1e10:
+            pass
+        else:
+            print('feat wrong')
+            for i in range(21):
+                print(np.sum(feat[i]))
+                print(feat[i])      
         return feat
 
     def position2point(self, position):

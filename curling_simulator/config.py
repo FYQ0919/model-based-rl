@@ -88,7 +88,8 @@ invalid_fill_value = -1.0
 
 
 # 网络输入
-network_input_size = (29, 128, 128)
+network_input_size = (4, 128, 128)
+# simplified_input_size = (4, 128, 128)
 
 
 

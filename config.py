@@ -117,7 +117,7 @@ def make_config():
   environment_modifications = parser.add_argument_group('general environment modifications')
   environment_modifications.add_argument('--clip_rewards', action='store_true')
   environment_modifications.add_argument('--stack_obs', type=int, default=1)
-  environment_modifications.add_argument('--input_channel', type=int, default=21)
+  environment_modifications.add_argument('--input_channel', type=int, default=4)
   environment_modifications.add_argument('--obs_range', nargs='+', type=float, default=None)
   environment_modifications.add_argument('--norm_obs', action='store_true')
   environment_modifications.add_argument('--sticky_actions', type=int, default=1)
@@ -180,7 +180,7 @@ def make_config():
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
   training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=['actors', 'learner'])
   training.add_argument('--learner_gpu_device_id', type=int, default=0)
-  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[0,0,0,0])
+  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[0,0,0,0,0])
 
   ### Sampled Muzero
   training.add_argument('--num_sample_action', type=int, default=0)
@@ -223,12 +223,12 @@ def make_config():
   elo_para = parser.add_argument_group('parameters for elo evaluation')
   # elo_para.add_argument('--adjust_steps', type=int, default=100)
   # elo_para.add_argument('--fast_eval_steps', type=int, default=5)
-  elo_para.add_argument('--elo_eval_steps', type=int, default=10000)
+  elo_para.add_argument('--elo_eval_steps', type=int, default=5000)
   elo_para.add_argument('--default_score', type=float, default=0.0)
   elo_para.add_argument('--c_elo', type=float, default=1.0/400.0)
   elo_para.add_argument('--elo_k1', type=float, default=32.0)
   elo_para.add_argument('--elo_k2', type=float, default=32.0)
-  elo_para.add_argument('--elo_eval_game_num', type=int, default=1)
+  elo_para.add_argument('--elo_eval_game_num', type=int, default=5)
 
 
   args = parser.parse_args()
