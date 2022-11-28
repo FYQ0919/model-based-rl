@@ -11,7 +11,7 @@ import ray
 import os
 
 
-@ray.remote(num_gpus = 1)
+@ray.remote(num_gpus = 0.5)
 class Learner(Logger):
 
   def __init__(self, config, storage, replay_buffer, state=None):
@@ -45,7 +45,7 @@ class Learner(Logger):
     self.scalar_loss_fn, self.policy_loss_fn = get_loss_functions(config)
 
     self.training_step = 0
-    self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0., 'aggregation_times': 0.}
+    self.losses_to_log = {'reward': 0., 'value': 0., 'policy': 0., 'aggregation_times': 0., "search_depth": 0.}
 
     self.throughput = {'total_frames': 0, 'total_games': 0, 'training_step': 0, 'time': {'ups': 0, 'fps': 0}}
 
@@ -140,16 +140,19 @@ class Learner(Logger):
           value_loss = self.losses_to_log['value'] / self.config.learner_log_frequency
           policy_loss = self.losses_to_log['policy'] / self.config.learner_log_frequency
           aggregation_times = self.losses_to_log['aggregation_times'] / self.config.learner_log_frequency
+          search_depth = self.losses_to_log['search_depth'] / self.config.learner_log_frequency
 
           self.losses_to_log['reward'] = 0
           self.losses_to_log['value'] = 0
           self.losses_to_log['policy'] = 0
           self.losses_to_log['aggregation_times'] = 0
+          self.losses_to_log["search_depth"] = 0
 
           self.log_scalar(tag='loss/reward', value=reward_loss, i=self.training_step)
           self.log_scalar(tag='loss/value', value=value_loss, i=self.training_step)
           self.log_scalar(tag='loss/policy', value=policy_loss, i=self.training_step)
           self.log_scalar(tag='loss/aggregation_times', value=aggregation_times, i=self.training_step)
+          self.log_scalar(tag='loss/search_depth', value=search_depth, i=self.training_step)
           self.log_throughput()
 
           if self.lr_scheduler is not None:
@@ -166,7 +169,7 @@ class Learner(Logger):
 
   def update_weights(self, batch):
     batch, idxs, is_weights = batch
-    observations, actions, targets,  aggregation_times_batch = batch
+    observations, actions, targets,  aggregation_times_batch, search_depth_batch = batch
 
     target_rewards, target_values, target_policies = targets
 
@@ -201,9 +204,15 @@ class Learner(Logger):
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
 
     aggregation_times = 0
+    search_depth = 0
 
     for k in aggregation_times_batch:
       aggregation_times += np.mean(k)
+    for j in search_depth_batch:
+      search_depth += np.mean(j)
+
+    aggregation_times /= self.config.batch_size
+    search_depth /= self.config.batch_size
 
     for i, action in enumerate(zip(*actions), 1):
       value, reward, policy_logits, hidden_state = self.network.recurrent_inference(hidden_state, action)
@@ -239,6 +248,7 @@ class Learner(Logger):
     self.losses_to_log['value'] += value_loss.detach().cpu().item()
     self.losses_to_log['policy'] += policy_loss.detach().cpu().item()
     self.losses_to_log['aggregation_times'] += aggregation_times
+    self.losses_to_log['search_depth'] += search_depth
 
   def launch(self):
     print("Learner is online on {}.".format(self.device))

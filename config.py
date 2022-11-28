@@ -126,6 +126,7 @@ def make_config():
   environment_modifications.add_argument('--fire_reset', action='store_true')
   environment_modifications.add_argument('--noop_reset', action='store_true')
   environment_modifications.add_argument('--noop_max', type=int, default=30)
+  environment_modifications.add_argument('--dmc', type=int, default=0)
 
   atari = parser.add_argument_group('atari environment modifications')
   atari.add_argument('--wrap_atari', action='store_true')
@@ -137,7 +138,7 @@ def make_config():
   self_play = parser.add_argument_group('self play')
   self_play.add_argument('--num_actors', nargs='+', type=int, default=[7])
   self_play.add_argument('--max_steps', type=int, default=40000)
-  self_play.add_argument('--num_simulations', nargs='+', type=int, default=[36])
+  self_play.add_argument('--num_simulations', nargs='+', type=int, default=[10])
   self_play.add_argument('--max_history_length', type=int, default=500)
   self_play.add_argument('--visit_softmax_temperatures', nargs=2, type=float, default=[1.0, 0.5, 0.25])
   self_play.add_argument('--visit_softmax_steps', nargs=2, type=int, default=[15e3, 30e3])
@@ -145,7 +146,7 @@ def make_config():
 
   # MCTS exploration
   exploration = parser.add_argument_group('exploration')
-  exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.3)
+  exploration.add_argument('--root_dirichlet_alpha', type=float, default=0.25)
   exploration.add_argument('--root_exploration_fraction', type=float, default=0.25)
   exploration.add_argument('--init_value_score', type=float, default=0.0)
   exploration.add_argument('--known_bounds', nargs=2, type=float, default=[None, None])
@@ -169,13 +170,13 @@ def make_config():
   training.add_argument('--training_steps', type=int, default=10000000)
   training.add_argument('--policy_loss', type=str, default='CrossEntropyLoss')
   training.add_argument('--scalar_loss', type=str, default='MSE')
-  training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[10])
+  training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[5])
   training.add_argument('--send_weights_frequency', type=int, default=500)
   training.add_argument('--weight_sync_frequency', type=int, default=1000)
   training.add_argument('--td_steps', nargs='+', type=int, default=[10])
-  training.add_argument('--batch_size', nargs='+', type=int, default=[256])
+  training.add_argument('--batch_size', nargs='+', type=int, default=[128])
   training.add_argument('--batches_per_fetch', type=int, default=15)
-  training.add_argument('--stored_before_train', type=int, default=1000)
+  training.add_argument('--stored_before_train', type=int, default=50000)
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
   training.add_argument('--discount', nargs='+', type=float, default=[0.997])
@@ -184,12 +185,12 @@ def make_config():
   training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=None)
 
   ### Sampled Muzero
-  training.add_argument('--num_sample_action', type=int, default=10)
+  training.add_argument('--num_sample_action', type=int, default=5)
 
   ### IBS
   training.add_argument('--use_ibs', type=bool, default=True)
-  training.add_argument('--max_r', type=float, default=1)
-  training.add_argument('--min_r', type=float, default=-1)
+  training.add_argument('--max_r', type=float, default=10)
+  training.add_argument('--min_r', type=float, default=-10)
 
   # AbS
   training.add_argument('--step_error', type=float, default=0.1)

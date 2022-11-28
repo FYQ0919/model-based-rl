@@ -101,8 +101,9 @@ class Node(object):
 
       for i in range(len(sample_action)):
         a = sample_action[i]
-        p = sample_policy_values[i]
-        self.children[a] = Node(p)
+        p1 = sample_policy_values[i]
+        p2 = policy_values[a]
+        self.children[a] = Node(p1/p2)
 
     else:
       policy = {a: policy_values[i] for i, a in enumerate(actions)}
@@ -271,11 +272,6 @@ class MCTS(object):
 
         for path in delet_paths:
           search_paths.remove(path)
-
-    if self.step_error > 0:
-      Note = open(f'./runs/{self.config.environment}/{self.config.group_tag}/{self.config.run_tag}/aggregation.txt', mode='a+')
-      Note.write(f'{root.aggregation_times} \n')
-
 
     return search_paths
 

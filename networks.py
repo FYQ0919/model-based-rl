@@ -57,11 +57,13 @@ class FCRepresentation(nn.Module):
         super(FCRepresentation, self).__init__()
 
         self.fc1 = nn.Linear(input_dim, 512)
+        # self.lstm = nn.LSTM(512, 512)
         self.out = nn.Linear(512, hidden_dim)
 
     def forward(self, x):
         batch_size = x.shape[0]
         x = x.view(batch_size, -1)
+        # x, (h_n, c_n) = self.lstm(self.fc1(x))
         x = F.relu(self.fc1(x))
         return self.out(x)
 

@@ -13,8 +13,8 @@ import random
 import os
 
 
-# @ray.remote(num_gpus = 0.5)
-@ray.remote
+@ray.remote(num_gpus = 0.3)
+# @ray.remote
 class Actor(Logger):
 
   def __init__(self, actor_key, config, storage, replay_buffer, state=None):
@@ -150,7 +150,10 @@ class Actor(Logger):
 
       root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
-      self.mcts.run(root, self.network)
+      search_paths = self.mcts.run(root, self.network)
+      search_depths = [len(search_path) for search_path in search_paths]
+
+      game.search_depths.append(np.mean(max(search_depths)))
 
       error = root.value() - initial_inference.value.item()
       game.history.errors.append(error)

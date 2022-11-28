@@ -7,6 +7,7 @@ import numpy as np
 import random
 import torch
 import gym
+import dmc2gym
 import gym_gomoku
 gym.logger.setLevel(40)
 
@@ -15,6 +16,14 @@ def get_environment(config):
     if config.environment == 'TicTacToe':
       from custom_environments.tic_tac_toe import TicTacToe
       environment = TicTacToe()
+
+    elif config.dmc:
+        environment = dmc2gym.make(domain_name=config.environment, task_name="swingup")
+
+        if not hasattr(environment, 'legal_actions'):
+            legal_actions = range(environment.action_space.n)
+            # print(legal_actions)
+            environment.legal_actions = lambda: legal_actions
     else:
       environment = gym.make(config.environment)
       environment = wrap_game(environment, config)

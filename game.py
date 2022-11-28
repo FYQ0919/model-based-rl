@@ -14,6 +14,7 @@ class HistorySlice(NamedTuple):
   env_states: list
   to_play: list
   aggregation_times: list
+  search_depths: list
 
 
 class History():
@@ -28,7 +29,8 @@ class History():
                      steps: list,
                      env_states: list,
                      to_play: list,
-                     aggregation_times: list):
+                     aggregation_times: list,
+                     search_depths: list):
     self.observations = observations
     self.child_visits = child_visits
     self.root_values = root_values
@@ -40,6 +42,7 @@ class History():
     self.env_states = env_states
     self.to_play = to_play
     self.aggregation_times = aggregation_times
+    self.search_depths = search_depths
 
   def get_slice(self, collect_from):
     return HistorySlice(self.observations[collect_from:],
@@ -52,7 +55,8 @@ class History():
                         self.steps[collect_from:],
                         self.env_states[collect_from:],
                         self.to_play[collect_from:],
-                        self.aggregation_times[collect_from:]
+                        self.aggregation_times[collect_from:],
+                        self.search_depths[collect_from:]
                         )
 
 
@@ -68,7 +72,7 @@ class Game(object):
 
     self.environment = environment
 
-    self.history = History([], [], [], [], [], [], [], [], [], [], [])
+    self.history = History([], [], [], [], [], [], [], [], [], [], [], [])
 
     self.terminal, self.done = False, False
     self.previous_collect_to = 0
@@ -78,6 +82,8 @@ class Game(object):
     self.max_value = -np.inf
     self.step = 0
     self.to_play = 1
+    self.search_depths = []
+
 
     self.info = {}
 
@@ -107,6 +113,7 @@ class Game(object):
     self.history.dones.append(done)
     self.history.rewards.append(reward)
     self.history.to_play.append(self.to_play)
+    self.history.search_depths.append(self.search_depths[-1])
     self.info = info
     
     if self.two_players:

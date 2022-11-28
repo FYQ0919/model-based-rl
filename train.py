@@ -68,8 +68,6 @@ def launch(config, date, state=None):
   env = get_environment(config)
   config.action_space = env.action_space.n
 
-  print(env.observation_space.shape)
-
   config.obs_space = env.observation_space.shape
 
   storage = SharedStorage.remote(config)
