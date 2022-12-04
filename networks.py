@@ -1,10 +1,14 @@
 from collections import namedtuple
+from re import I
 import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
 import torch
 import math
 from curling_simulator.config import * 
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 
 NetworkOutput = namedtuple('network_output', ('value', 'reward', 'policy_logits', 'hidden_state'))
@@ -24,13 +28,24 @@ class BaseNetwork(nn.Module):
   def dynamics(self, hidden_state, action):
     raise NotImplementedError
 
-  def initial_inference(self, observation):
+  def initial_inference(self, observation):    
+    if np.sum(observation.detach().cpu().numpy())>=-1e10:
+      pass
+    else:
+      print('observation wrong')
+      print(np.sum(observation.detach().cpu().numpy()))
+      
     hidden_state = self.representation(observation)
+      
     policy_logits, value = self.prediction(hidden_state)
     return NetworkOutput(value, 0, policy_logits, hidden_state)
 
   def recurrent_inference(self, hidden_state, action):
     hidden_state, reward = self.dynamics(hidden_state, action)
+    
+    if hidden_state.isnan().any():
+      print("recurr dyna wrong")
+      
     policy_logits, value = self.prediction(hidden_state)
     return NetworkOutput(value, reward, policy_logits, hidden_state)
 
@@ -402,13 +417,27 @@ class ResidualBlock(nn.Module):
     self.bn2 = nn.BatchNorm2d(num_channels)
 
   def forward(self, x):
+    if x.isnan().any():
+      print("error0")
     out = self.conv1(x)
+    if out.isnan().any():
+      print("error1")
     out = self.bn1(out)
+    if out.isnan().any():
+      print("error2")
     out = F.relu(out)
+    if out.isnan().any():
+      print("error3")
     out = self.conv2(out)
+    if out.isnan().any():
+      print("error4")
     out = self.bn2(out)
+    if out.isnan().any():
+      print("error5")
     out += x
     out = F.relu(out)
+    if out.isnan().any():
+      print("error6")
     return out
 
 
@@ -463,12 +492,29 @@ class MuZeroDynamics(nn.Module):
     batch_size = x.size(0)
     out = self.conv(x)
     out = self.bn(out)
+    
+    if out.isnan().any():
+      print("Dyna bn wrong!")
+    
     out = F.relu(out)
+    
+    # count = 1
     for block in self.resblocks:
-        out = block(out)
+      # print("shape: ", out.shape)
+      out = block(out)
+        
     state = out
+    
     reward = F.relu(self.fc1(out.view(batch_size, -1)))
+    
+    if reward.isnan().any():
+      print("Dyna relu fc1 nan!")
+    
     reward = self.fc2(reward.view(batch_size, -1))
+    
+    if reward.isnan().any():
+      print("Dyna fc2 nan!")
+    
     return state, reward
 
 
@@ -499,6 +545,15 @@ class MuZeroPrediction(nn.Module):
 
     policy = F.relu(self.fc_policy(out))
     policy = self.fc_policy_o(policy)
+    
+    # print(abs(sum(value)))
+    # print('prediction net')
+    # print(abs(np.sum(x.cpu().numpy())))
+    # print(abs(np.sum(out.cpu().numpy())))
+    # print(abs(np.sum(value.cpu().numpy())))
+    # print(abs(np.sum(policy.cpu().numpy())))
+
+      
     return policy, value
 
 
@@ -529,16 +584,46 @@ class MuZeroNetwork(BaseNetwork):
     return hidden_state
 
   def prediction(self, hidden_state):
+    if hidden_state.isnan().any():
+      print('hidden_state wrong')
+      print(np.sum(hidden_state.detach().cpu().numpy()))
+      
     policy, value = self.prediction_head(hidden_state)
+    
+    if value.isnan().any():
+      print('in prediction1')
+      print(np.sum(value.detach().cpu().numpy()))
+      
     if not self.training and not self.no_support:
       value = self.inverse_value_transform(value)
+    
+    # if np.sum(value.detach().cpu().numpy())>=-1e10:
+    #   pass
+    # else:
+    #   print('in prediction2')
+    #   print(np.sum(value.detach().cpu().numpy()))
     return policy, value
 
   def dynamics(self, hidden_state, action):
+  
     hidden_state_with_action = self.attach_action(hidden_state, action)
+    
+    if hidden_state_with_action.isnan().any():
+      print("hidden_state_with_action wrong")
+      
     next_hidden_state, reward = self.dynamics_head(hidden_state_with_action)
+    
+    if next_hidden_state.isnan().any():
+      print("dyna hidden_state wrong")
+    elif reward.isnan().any():
+      print("dyna reward wrong")
+    
     if not self.training and not self.no_support:
       reward = self.inverse_reward_transform(reward)
+      
+    if reward.isnan().any():
+      print("scaled reward wrong")
+    
     next_hidden_state = self.scale_state(next_hidden_state)
     return next_hidden_state, reward
 
@@ -551,9 +636,31 @@ class MuZeroNetwork(BaseNetwork):
     return hidden_state
 
   def scale_state(self, state):
-    _min = state.min(dim=1, keepdim=True)[0]
+    _min = state.min(dim=1, keepdim=True)[0]#1,128,8,8
     _max = state.max(dim=1, keepdim=True)[0]
-    state = (state - _min) / (_max - _min)
+    # print(_max.shape, _min.shape)
+    
+    # if ((_max - _min).all() == 0):
+    #   print("scale nume=0 wrong")
+      # print(state)
+      
+    deno = _max - _min
+    # print(deno.dtype)
+    deno = torch.where(deno==0, torch.tensor(1.0).to(self.device), deno)
+    state = (state - _min) / deno
+
+    # if ((_max - _min).all() == 0):
+    #   print("scale nume=0 wrong")
+    #   print(state)
+    #   # numerator = 1e10
+    #   state = torch.ones(state.shape)
+    # else:
+    #   # numerator = (_max - _min)
+    #   state = (state - _min) / (_max - _min)
+
+    
+    if state.isnan().any():
+      print("scaled state nan wrong")
     return state
 
   def load_weights(self, weights):

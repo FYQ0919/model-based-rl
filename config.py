@@ -117,7 +117,7 @@ def make_config():
   environment_modifications = parser.add_argument_group('general environment modifications')
   environment_modifications.add_argument('--clip_rewards', action='store_true')
   environment_modifications.add_argument('--stack_obs', type=int, default=1)
-  environment_modifications.add_argument('--input_channel', type=int, default=4)
+  environment_modifications.add_argument('--input_channel', type=int, default=6)
   environment_modifications.add_argument('--obs_range', nargs='+', type=float, default=None)
   environment_modifications.add_argument('--norm_obs', action='store_true')
   environment_modifications.add_argument('--sticky_actions', type=int, default=1)
@@ -169,21 +169,21 @@ def make_config():
   training.add_argument('--policy_loss', type=str, default='CrossEntropyLoss')
   training.add_argument('--scalar_loss', type=str, default='MSE')
   training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[5])
-  training.add_argument('--send_weights_frequency', type=int, default=500)
-  training.add_argument('--weight_sync_frequency', type=int, default=1000)
-  training.add_argument('--td_steps', nargs='+', type=int, default=[10])
-  training.add_argument('--batch_size', nargs='+', type=int, default=[64])
+  training.add_argument('--send_weights_frequency', type=int, default=1000)
+  training.add_argument('--weight_sync_frequency', type=int, default=50)
+  training.add_argument('--td_steps', nargs='+', type=int, default=[20])
+  training.add_argument('--batch_size', nargs='+', type=int, default=[256])
   training.add_argument('--batches_per_fetch', type=int, default=15)
   training.add_argument('--stored_before_train', type=int, default=10)
   training.add_argument('--clip_grad', type=int, default=0)
   training.add_argument('--no_target_transform', action='store_true')
-  training.add_argument('--discount', nargs='+', type=float, default=[0.997])
+  training.add_argument('--discount', nargs='+', type=float, default=[1.0])
   training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=['actors', 'learner'])
-  training.add_argument('--learner_gpu_device_id', type=int, default=0)
-  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[0,0,0,0,0])
+  training.add_argument('--learner_gpu_device_id', type=int, default=3)
+  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[1,1,1,1,2,2,2,2,3,3])
 
   ### Sampled Muzero
-  training.add_argument('--num_sample_action', type=int, default=0)
+  training.add_argument('--num_sample_action', type=int, default=120)
 
   # Optimizer
   training.add_argument('--optimizer', choices=['RMSprop', 'Adam', 'AdamW', 'SGD'], type=str, default='AdamW')
@@ -192,9 +192,10 @@ def make_config():
 
   # Learning rate
   training.add_argument('--lr_init', nargs='+', type=float, default=[0.01])
-  training.add_argument('--lr_scheduler', choices=['ExponentialLR', 'MuZeroLR', 'WarmUpLR'], type=str, default=None)
-  training.add_argument('--lr_decay_rate', type=float, default=0.1)
-  training.add_argument('--lr_decay_steps', type=int, default=100000)
+  training.add_argument('--lr_scheduler', choices=['ExponentialLR', 'MuZeroLR', 'WarmUpLR', 'SteadyExpLR'], type=str, default='SteadyExpLR')
+  training.add_argument('--lr_decay_rate', type=float, default=0.5)
+  training.add_argument('--lr_decay_steps', type=int, default=10000)
+  training.add_argument('--lr_steady_steps', type=int, default=20000)
 
   ### Saving and Loading
   load_and_save = parser.add_argument_group('saving and loading')
@@ -223,12 +224,12 @@ def make_config():
   elo_para = parser.add_argument_group('parameters for elo evaluation')
   # elo_para.add_argument('--adjust_steps', type=int, default=100)
   # elo_para.add_argument('--fast_eval_steps', type=int, default=5)
-  elo_para.add_argument('--elo_eval_steps', type=int, default=5000)
+  elo_para.add_argument('--elo_eval_steps', type=int, default=3000)#1000
   elo_para.add_argument('--default_score', type=float, default=0.0)
   elo_para.add_argument('--c_elo', type=float, default=1.0/400.0)
   elo_para.add_argument('--elo_k1', type=float, default=32.0)
   elo_para.add_argument('--elo_k2', type=float, default=32.0)
-  elo_para.add_argument('--elo_eval_game_num', type=int, default=5)
+  elo_para.add_argument('--elo_eval_game_num', type=int, default=3)
 
 
   args = parser.parse_args()
@@ -256,9 +257,9 @@ def get_evaluation_args():
 
   parser.add_argument('--seed', type=int, default=None)
   parser.add_argument('--num_games', type=int, default=1)
-  parser.add_argument('--saves_dir', nargs='+', type=str, default=[''])
+  parser.add_argument('--saves_dir', nargs='+', type=str, default=['./eval_save/'])
   parser.add_argument('--nets', nargs='+', type=str, default=[''])
-  parser.add_argument('--num_simulations', nargs='+', type=int, default=[None])
+  parser.add_argument('--num_simulations', nargs='+', type=int, default=[200])
   parser.add_argument('--temperatures', nargs='+', type=float, default=[0])
   parser.add_argument('--only_prior', nargs='+', type=int, default=[0])
   parser.add_argument('--only_value', nargs='+', type=int, default=[0])
@@ -275,10 +276,11 @@ def get_evaluation_args():
   parser.add_argument('--smooth', type=int, default=None)
   parser.add_argument('--save_gif_as', type=str, default='')
   parser.add_argument('--save_mcts', action='store_true')
-  parser.add_argument('--save_mcts_after_step', type=int, default=0)
+  parser.add_argument('--save_mcts_after_step', type=int, default=13)
   parser.add_argument('--parallel', action='store_true')
   parser.add_argument('--use_gpu', action='store_true')
   parser.add_argument('--verbose', action='store_true')
+  parser.add_argument('--path', type=str, default='')
 
   return parser.parse_args()
 

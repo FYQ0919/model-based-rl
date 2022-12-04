@@ -14,7 +14,7 @@ import traceback
 
 
 # @ray.remote
-@ray.remote(num_gpus=0.5)
+@ray.remote(num_gpus=0.25)
 class Learner(Logger):
 
   def __init__(self, config, storage, replay_buffer, state=None):
@@ -61,8 +61,10 @@ class Learner(Logger):
     if state is not None:
       self.load_state(state)
       
-    self.elo_eval = [ELO_evaluator.remote(eval_key, self.config, storage, replay_buffer, state) for eval_key in range(config.num_actors)]
-
+    # self.elo_eval = [ELO_evaluator.remote(eval_key, self.config, storage, replay_buffer, state) for eval_key in range(config.num_actors)]
+    eval_key = range(config.num_actors)
+    self.elo_eval = [ELO_evaluator.remote(eval_key, self.config, storage, replay_buffer, state)]
+                     
     Logger.__init__(self)
 
   def load_state(self, state):
@@ -150,26 +152,26 @@ class Learner(Logger):
           self.save_state()
           
         if self.config.two_players and self.training_step % self.config.elo_eval_steps == 0:
-          list_ra_0 = []
+          list_off = []
           # list_rb_0 = []
-          list_ra_1 = []
+          list_def = []
+          elo_list = []
           # list_rb_1 = []
           print("Step:{}; ELO_rating......".format(self.training_step))
           ray.get([eval.launch.remote() for eval in self.elo_eval])
           for eval in self.elo_eval:
-            ra_0, rb_0, ra_1, rb_1 = ray.get(eval.get_value.remote())
+            ra, rb = ray.get(eval.get_value.remote())
             # print('elo_A:{} ;elo_B:{}'.format(ra,rb))
-            print('elo_A_offen:{} '.format(ra_0))
-            print('elo_A_defen:{} '.format(ra_1))
-            list_ra_0.append(ra_0)
-            list_ra_1.append(ra_1)
+            print('elo:{} '.format(rb))
+            elo_list.append(rb)
+            # list_def.append(rb_1)
             # list_rb.append(rb)
-          avg_ra_offen = sum(list_ra_0) / len(list_ra_0)
-          avg_ra_defen = sum(list_ra_1) / len(list_ra_1)
+          avg_elo = sum(elo_list) / len(elo_list)
+          # avg_defen = sum(list_def) / len(list_def)
           # avg_rb = sum(list_rb) / len(list_rb)
-          self.log_scalar(tag='elo_ra_offen', value=avg_ra_offen, i=self.training_step)
-          self.log_scalar(tag='elo_ra_defen', value=avg_ra_defen, i=self.training_step)
-          # self.log_scalar(tag='elo_rb', value=avg_rb, i=self.training_step)
+          # self.log_scalar(tag='elo_ra_offen', value=avg_offen, i=self.training_step)
+          # self.log_scalar(tag='elo_ra_defen', value=avg_defen, i=self.training_step)
+          self.log_scalar(tag='elo', value=avg_elo, i=self.training_step)
 
         if self.training_step % self.config.learner_log_frequency == 0:
           reward_loss = self.losses_to_log['reward'] / self.config.learner_log_frequency

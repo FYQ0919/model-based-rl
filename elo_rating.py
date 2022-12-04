@@ -73,7 +73,8 @@ def compute_elo_rating(winner: int, ra=0, rb=0) -> float:
 class ELO_evaluator(Logger):
 
   def __init__(self, eval_key, config, storage, replay_buffer, state=None):
-    set_all_seeds(config.seed + eval_key if config.seed is not None else None)
+    set_all_seeds(config.seed + 0 if config.seed is not None else None)
+    self.worker_id = 'evaluator-{}'.format(0)
 
     self.run_tag = config.run_tag
     self.group_tag = config.group_tag
@@ -87,6 +88,11 @@ class ELO_evaluator(Logger):
     self.environment.seed(self.config.seed)
     self.mcts = MCTS(self.config)
     
+    self.ra = self.config.default_score
+    self.rb = self.config.default_score
+    self.record_ra = self.ra
+    self.record_rb = self.rb
+    
     self.ra_offen = self.config.default_score
     self.ra_defen = self.config.default_score
     self.rb_offen = self.config.default_score
@@ -97,11 +103,11 @@ class ELO_evaluator(Logger):
     self.record_rb_defen = self.rb_defen
     self.record_rb_offen = self.rb_offen
     
-    if self.config.fixed_temperatures:
-      self.temperature = self.config.fixed_temperatures[self.eval_key]
-      self.worker_id = 'evaluators/temp={}'.format(round(self.temperature, 1))
-    else:
-      self.worker_id = 'evaluator-{}'.format(self.eval_key)
+    # if self.config.fixed_temperatures:
+    #   self.temperature = self.config.fixed_temperatures[self.eval_key]
+    #   self.worker_id = 'evaluators/temp={}'.format(round(self.temperature, 1))
+    # else:
+    #   self.worker_id = 'evaluator-{}'.format(self.eval_key)
 
     if "eval" in self.config.use_gpu_for:
       if torch.cuda.is_available():
@@ -143,7 +149,18 @@ class ELO_evaluator(Logger):
     Logger.__init__(self)
     
   def get_value(self):
-    return self.ra_offen, self.rb_offen, self.ra_defen, self.rb_defen
+    # return self.ra_offen, self.rb_offen, self.ra_defen, self.rb_defen
+    return self.ra, self.rb
+  
+  def save_state(self):
+    state = {'dirs': self.dirs,
+             'config': self.config,
+    		 		 'weights': self.curr_network.get_weights(),
+             'training_step': self.training_step,}
+    path = os.path.join(self.dirs['saves'], 'best_history_network', str(state['training_step']))
+    if not os.path.exists(os.path.join(self.dirs['saves'], 'best_history_network')):
+      os.mkdir(os.path.join(self.dirs['saves'], 'best_history_network'))
+    torch.save(state, path)
 
   def load_state(self, state):
     self.run_tag = os.path.join(self.run_tag, 'resumed', '{}'.format(state['training_step']))
@@ -171,33 +188,109 @@ class ELO_evaluator(Logger):
     rb_offen_list = []
     ra_defen_list = []
     rb_defen_list = []
-    for i in range(self.config.elo_eval_game_num):
-      ra_0, rb_0, ra_1, rb_1 = self.play_game(game)
-      ra_offen_list.append(ra_0)
-      rb_offen_list.append(rb_0)
-      ra_defen_list.append(ra_1)
-      rb_defen_list.append(rb_1)
-    self.ra_offen = sum(ra_offen_list) / len(ra_offen_list)
-    self.rb_offen = sum(rb_offen_list) / len(rb_offen_list)
-    self.ra_defen = sum(ra_defen_list) / len(ra_defen_list)
-    self.rb_defen = sum(rb_defen_list) / len(rb_defen_list)
     
-    # if self.ra_offen > self.record_ra_offen:
-    self.old_network.load_state_dict(self.curr_network.state_dict())
-    self.record_ra_offen = self.ra_offen
-    self.record_rb_offen = self.rb_offen
-    self.record_ra_defen = self.ra_defen
-    self.record_rb_defen = self.rb_defen
+    #separate compute
+    # for i in range(self.config.elo_eval_game_num):
+    #   ra_0, rb_0, ra_1, rb_1 = self.play_game(game)
+    #   ra_offen_list.append(ra_0)
+    #   rb_offen_list.append(rb_0)
+    #   ra_defen_list.append(ra_1)
+    #   rb_defen_list.append(rb_1)
+    # self.ra_offen = sum(ra_offen_list) / len(ra_offen_list)
+    # self.rb_offen = sum(rb_offen_list) / len(rb_offen_list)
+    # self.ra_defen = sum(ra_defen_list) / len(ra_defen_list)
+    # self.rb_defen = sum(rb_defen_list) / len(rb_defen_list)
     
-    # if game.history.rewards[-1] > 0:
-    #   self.ra, self.rb = compute_elo_rating(winner=1, ra=self.ra, rb=self.rb)
-    # else:
-    #   self.ra, self.rb = compute_elo_rating(winner=0, ra=self.ra, rb=self.rb)
+    # # if self.ra_offen > self.record_ra_offen:
     # self.old_network.load_state_dict(self.curr_network.state_dict())
-      # print('elo_A:{} ;elo_B:{}'.format(self.ra,self.rb))
+    # self.record_ra_offen = self.ra_offen
+    # self.record_rb_offen = self.rb_offen
+    # self.record_ra_defen = self.ra_defen
+    # self.record_rb_defen = self.rb_defen
+    
+    
+    #together compute
+    new_net_win_count = 0
+    
+    self.temperature = 0
+    print('temperature: ', self.temperature)
+    for _ in range(self.config.elo_eval_game_num):
+      count0 = self.play_game_together(game)
+      new_net_win_count += count0
+    
+    #compute elo, ra: record_net, rb: new_net
+    if new_net_win_count > self.config.elo_eval_game_num: # new net win
+      print('new net win')
+      ra, rb = compute_elo_rating(winner=1, ra=self.record_ra, rb=self.record_ra)
+      self.old_network.load_state_dict(self.curr_network.state_dict())
+      self.save_state()
+      self.ra, self.rb = ra, rb
+      self.record_ra = rb
+      
+    elif new_net_win_count < self.config.elo_eval_game_num: # new net lose
+      print('new net lose')
+      ra, rb = compute_elo_rating(winner=0, ra=self.record_ra, rb=self.record_ra)
+      self.ra, self.rb = ra, rb
+      self.record_ra = ra
 
     self.sync_weights(force=True)
+    
+  def play_game_together(self, game):
+    new_net_win_count = 0
+    if not self.config.fixed_temperatures:
+      self.temperature = self.config.visit_softmax_temperature(self.training_step)
+      
+    for i in range(2):
+      _ = game.environment.reset()
+      game.terminal = False
+      while not game.terminal:
+        if game.environment.curr_player.value == i:
+          # print('curr')
+          use_net = self.curr_network
+        else:
+          # print('old')
+          use_net = self.old_network
+        root = Node(0)
 
+        current_observation = np.float32(game.get_observation(-1))
+        if self.config.norm_obs:
+          current_observation = (current_observation - self.obs_min) / self.obs_range
+        current_observation = torch.from_numpy(current_observation).to(self.device)
+
+        initial_inference = use_net.initial_inference(current_observation.unsqueeze(0))
+
+        legal_actions = game.environment.legal_actions()
+        root.expand(initial_inference, game.to_play, legal_actions, self.config)
+        # root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
+
+        self.mcts.run(root, use_net)
+
+        error = root.value() - initial_inference.value.item()
+        game.history.errors.append(error)
+
+        action = self.config.select_action(root, self.temperature)
+
+        game.apply(action)
+        game.store_search_statistics(root)
+
+        # self.experiences_collected += 1
+
+        # if self.experiences_collected % self.config.weight_sync_frequency == 0:
+        #   self.sync_weights()
+      
+      if i==0: #A use new net
+        if game.history.rewards[-1] < 0: #player_A wins
+          new_net_win_count += 1
+
+      else: #B use new net
+        if game.history.rewards[-1] > 0: #player_B wins
+          new_net_win_count += 1
+      
+    if self.config.two_players:
+      self.stats_to_log[game.info["result"]] += 1
+      
+    return new_net_win_count
+  
   def play_game(self, game):
     ra_0 = 0
     ra_1 = 0
@@ -208,39 +301,42 @@ class ELO_evaluator(Logger):
       self.temperature = self.config.visit_softmax_temperature(self.training_step)
 
     if game.environment.curr_shot == 15:
-      use_net = self.curr_network
-      root = Node(0)
+      for i in range(2):
+        use_net = self.curr_network
+        root = Node(0)
 
-      current_observation = np.float32(game.get_observation(-1))
-      if self.config.norm_obs:
-        current_observation = (current_observation - self.obs_min) / self.obs_range
-      current_observation = torch.from_numpy(current_observation).to(self.device)
+        current_observation = np.float32(game.get_observation(-1))
+        if self.config.norm_obs:
+          current_observation = (current_observation - self.obs_min) / self.obs_range
+        current_observation = torch.from_numpy(current_observation).to(self.device)
 
-      initial_inference = use_net.initial_inference(current_observation.unsqueeze(0))
+        initial_inference = use_net.initial_inference(current_observation.unsqueeze(0))
 
-      legal_actions = game.environment.legal_actions()
-      root.expand(initial_inference, game.to_play, legal_actions, self.config)
-      root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
+        legal_actions = game.environment.legal_actions()
+        root.expand(initial_inference, game.to_play, legal_actions, self.config)
+        root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
-      self.mcts.run(root, use_net)
+        self.mcts.run(root, use_net)
 
-      error = root.value() - initial_inference.value.item()
-      game.history.errors.append(error)
+        error = root.value() - initial_inference.value.item()
+        game.history.errors.append(error)
 
-      action = self.config.select_action(root, self.temperature)
+        action = self.config.select_action(root, self.temperature)
 
-      game.apply(action)
-      game.store_search_statistics(root)
-      
-      if game.history.rewards[-1] > 0: #player_B wins
-        ra_1, rb_1 = compute_elo_rating(winner=0, ra=self.ra_defen, rb=self.rb_defen)
-        # self.record_ra = self.ra
-        # self.record_rb = self.rb
-      else:
-        ra_1, rb_1 = compute_elo_rating(winner=1, ra=self.ra_defen, rb=self.rb_defen)
-        # self.old_network.load_state_dict(self.curr_network.state_dict())
-        # self.record_ra = self.ra
-        # self.record_rb = self.rb
+        game.apply(action)
+        game.store_search_statistics(root)
+        
+        if i == 0:
+          if game.history.rewards[-1] > 0: #player_B wins
+            ra_1, rb_1 = compute_elo_rating(winner=0, ra=self.ra_defen, rb=self.rb_defen)
+          else:
+            ra_1, rb_1 = compute_elo_rating(winner=1, ra=self.ra_defen, rb=self.rb_defen)
+        else:
+          if game.history.rewards[-1] > 0: #player_B wins
+            ra_1, rb_1 = compute_elo_rating(winner=0, ra=self.ra_defen, rb=self.rb_defen)
+          else:
+            ra_1, rb_1 = compute_elo_rating(winner=1, ra=self.ra_defen, rb=self.rb_defen)
+          
     
     else:
       ra_list = []
@@ -295,11 +391,11 @@ class ELO_evaluator(Logger):
         
         else:#defensive
           if game.history.rewards[-1] > 0: #player_B wins
-            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_offen, rb=self.record_rb_offen)
+            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_offen, rb=self.record_rb_offen)
             # self.record_ra = self.ra
             # self.record_rb = self.rb
           else:
-            ra, rb = compute_elo_rating(winner=1, ra=self.record_ra_offen, rb=self.record_rb_offen)
+            ra, rb = compute_elo_rating(winner=0, ra=self.record_ra_offen, rb=self.record_rb_offen)
             # self.old_network.load_state_dict(self.curr_network.state_dict())
             # self.record_ra = self.ra
             # self.record_rb = self.rb

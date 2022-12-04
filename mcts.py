@@ -75,6 +75,9 @@ class Node(object):
       sample_policy_values = torch.softmax(
         torch.tensor([policy_logits[0][a] for a in sample_action]), dim=0
       ).numpy().astype('float64')
+      
+      corresponding_value = np.array([policy_values[a] for a in sample_action], dtype='float64')
+      sample_policy_values = sample_policy_values / corresponding_value
 
       for i in range(len(sample_action)):
         a = sample_action[i]
@@ -140,13 +143,18 @@ class MCTS(object):
 
   def select_child(self, node):
     if node.visit_count == 0:
-      _, action, child = max(
+      prio, action, child = max(
           (child.prior, action, child)
           for action, child in node.children.items())
+      # print('prior: ', [child.prior for _, child in node.children.items()])
+      # print('prior: ', prio)
     else:
-      _, action, child = max(
+      ucb, action, child = max(
           (self.ucb_score(node, child), action, child)
           for action, child in node.children.items())
+      # print('ucb_prior: ', [child.prior for _, child in node.children.items()])
+      # print('ucb: ', [self.ucb_score(node, child) for _, child in node.children.items()])
+      # print('ucb: ', ucb)
     return action, child
 
   def ucb_score(self, parent, child):

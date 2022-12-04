@@ -17,23 +17,43 @@ class SumTree(object):
     self.position = 0
 
   def add(self, priorities, history):
+    # if sum(priorities) > 0 :
+    #   pass
+    # else:
+
     for step, priority in enumerate(priorities):
       idx = self.position + self.max_capacity - 1
       self.buffer[self.position] = (step, history)
+
+    
       self.update(idx, priority)
 
       if self.position >= self.prev_capacity:
         self.num_memories += 1
+      
+      # if self.num_memories >= self.max_capacity:
+      #   self.num_memories = self.max_capacity
 
-      self.position = (self.position + 1) % self.capacity
+      # self.position = (self.position + 1) % self.capacity
+      self.position += 1
+      if self.position >= self.max_capacity:
+        self.position = 0
+
+
 
       if self.position == 0:
         self.prev_capacity = self.capacity
         self.capacity = min(self.max_capacity, (self.capacity + self.capacity_step))
 
   def update(self, idx, priority):
-    change = priority - self.tree[idx]
+    # if abs(priority) >= 0:
+    #   pass
+    # else:      
+      
+    change = priority - self.tree[idx]      
     self.tree[idx] = priority
+    
+    
 
     while idx != 0:
       idx = (idx - 1) // 2
@@ -57,7 +77,17 @@ class SumTree(object):
           parent_index = right_child_index
 
     buffer_index = leaf_index - self.max_capacity + 1
+    
+  
     step, history = self.buffer[buffer_index]
+    # except:
+    #   print('Buffer Index Wrong!')
+    #   print(buffer_index, leaf_index)
+    #   print(value)
+    #   print(self.tree)
+    #   # while self.buffer[buffer_index] == 0:
+    #   #   buffer_index -= 1
+    #   # step, history = self.buffer[buffer_index]
 
     return leaf_index, self.tree[leaf_index], step, history
 
@@ -115,7 +145,17 @@ class PrioritizedReplay():
       errors = history.errors[:-ignore]
       priorities = self.get_priorities(errors) if errors else []
     else:
-      priorities = self.get_priorities(history.errors)
+      errors = history.errors
+      priorities = self.get_priorities(errors)
+    
+    # print('Saving......')
+    # if sum(priorities) > 0 :
+    #   pass
+    # else:
+    #   print('priorities <= 0')
+    #   print(priorities)
+    #   print(errors)
+      
     self.tree.add(priorities, history)
 
     self.throughput['frames'] += len(priorities)

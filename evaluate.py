@@ -242,7 +242,6 @@ class Evaluator(SummaryTools):
 
     def play_game(self, environment):
         assert self.network is not None, ".load_network() needs to be called before playing."
-
         game = self.config.new_game(environment)
 
         if self.config.save_mcts:
@@ -277,13 +276,19 @@ class Evaluator(SummaryTools):
 
             actions_to_apply, corresponding_rewards = [], []
             if self.config.only_prior:
+                # print([(child.prior, action) for action, child in root.children.items()])
+                # for action, child in root.children.items():
+                #     print(child.value_sum,'\n')
+                    
                 _, action = max([(child.prior, action) for action, child in root.children.items()])
                 reward = self.network.recurrent_inference(root.hidden_state, [action]).reward.item()
                 actions_to_apply.append(action)
                 corresponding_rewards.append(reward)
                 root.children[action].visit_count += 1
                 game.search_depths.append([0])
-
+                # print(reward)
+                # print('kjshabvka')
+                
             elif self.config.only_value:
                 q_values = []
                 max_q_val = -np.inf
@@ -291,6 +296,9 @@ class Evaluator(SummaryTools):
                     output = self.network.recurrent_inference(root.hidden_state, [action])
                     if self.config.two_players:
                         q_val = (output.reward - self.config.discount * output.value).item()
+                        # print(output.reward)
+                        # print(output.value)
+                        # print('kjshabvka')
                     else:
                         q_val = (output.reward + self.config.discount * output.value).item()
                     if q_val > max_q_val:
@@ -310,13 +318,14 @@ class Evaluator(SummaryTools):
 
                 if self.config.save_mcts and game.step >= self.config.save_mcts_after_step:
                     path_to_file = os.path.join(path_to_mcts_folder, str(game.step) + '.png')
-                    write_mcts_as_png(search_paths, path_to_file=path_to_file)
+                    write_mcts_as_png(search_paths, max_search_depth=10, path_to_file=path_to_file)
 
                 node = root
                 actions_applied = 0
                 while node.expanded():
                     action = self.config.select_action(node, temperature=self.config.temperature)
                     reward = node.children[action].reward
+                    print("each_reward: ", reward)
                     node = node.children[action]
 
                     actions_to_apply.append(action)
@@ -343,6 +352,7 @@ class Evaluator(SummaryTools):
                     to_play = game.to_play
 
                 game.apply(action)
+                # print("game_reward: ", game.history.rewards[-1])
 
                 if self.config.verbose:
                     prior_policy = [round(child.prior, 2) for child in root.children.values()]

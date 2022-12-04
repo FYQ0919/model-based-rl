@@ -14,8 +14,7 @@ import random
 import os
 
 
-# @ray.remote
-@ray.remote(num_gpus=0.5)
+@ray.remote(num_gpus=0.25)
 class Actor(Logger):
 
   def __init__(self, actor_key, config, storage, replay_buffer, state=None):
@@ -153,12 +152,19 @@ class Actor(Logger):
       initial_inference = self.network.initial_inference(current_observation.unsqueeze(0))
 
       legal_actions = game.environment.legal_actions()
-      root.expand(initial_inference, game.to_play, legal_actions, self.config)
+      root.expand(initial_inference, game.environment.to_play(), legal_actions, self.config)
       root.add_exploration_noise(self.config.root_dirichlet_alpha, self.config.root_exploration_fraction)
 
       self.mcts.run(root, self.network)
 
       error = root.value() - initial_inference.value.item()
+      
+      if abs(error) >= 0:
+        pass
+      else:
+        print('actor error is nan')
+        print(root.value(), initial_inference.value.item())
+        
       game.history.errors.append(error)
 
       action = self.config.select_action(root, self.temperature)

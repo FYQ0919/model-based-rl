@@ -16,7 +16,7 @@ def get_environment(config):
       environment = TicTacToe()
     elif config.environment == 'Curling':
         from curling_simulator.gym_env import CurlingTwoAgentGymEnv_v0
-        environment = CurlingTwoAgentGymEnv_v0()
+        environment = CurlingTwoAgentGymEnv_v0(render=config.render)
         environment = wrap_game(environment, config)
         if(config.path != ''):
           environment.initialize_img = config.bgr_img
@@ -127,6 +127,25 @@ class WarmUpLR():
       for param_group in self.optimizer.param_groups:
         param_group["lr"] = self.lr
 
+class SteadyExpLR():
+
+  def __init__(self, optimizer, config):
+    self.optimizer = optimizer
+    self.lr_decay_steps = config.lr_decay_steps
+    self.lr_decay_rate = config.lr_decay_rate
+    self.lr_init = config.lr_init
+    self.lr_step = 0
+    self.lr = self.lr_init
+    self.lr_steady_steps = config.lr_steady_steps
+
+  def step(self):
+    self.lr_step += 1
+    if self.lr_step <= self.lr_steady_steps:
+      self.lr = self.lr_init
+    else:
+      self.lr = self.lr_init * self.lr_decay_rate ** ((self.lr_step - self.lr_steady_steps)/ self.lr_decay_steps)
+    for param_group in self.optimizer.param_groups:
+      param_group["lr"] = self.lr
 
 def get_lr_scheduler(config, optimizer):
   if config.lr_scheduler is None:
@@ -137,6 +156,8 @@ def get_lr_scheduler(config, optimizer):
     lr_scheduler = MuZeroLR(optimizer, config)
   elif config.lr_scheduler == 'WarmUpLR':
     lr_scheduler = WarmUpLR(optimizer, config)
+  if config.lr_scheduler == 'SteadyExpLR':
+    lr_scheduler = SteadyExpLR(optimizer, config)
   else:
     raise NotImplementedError
   return lr_scheduler

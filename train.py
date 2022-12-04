@@ -4,6 +4,7 @@ from utils import get_environment
 import numpy as np
 from learners import Learner
 from actors import Actor
+import json
 from config import make_config
 from copy import deepcopy
 import datetime
@@ -65,7 +66,20 @@ def print_launch_message(config, date):
 
 def launch(config, date, state=None):
   os.environ["OMP_NUM_THREADS"] = "1"
-  ray.init(num_gpus=4)
+  ray.init(num_gpus=4, \
+           _system_config={
+             "local_fs_capacity_threshold":1,
+             "object_spilling_config":json.dumps(
+               {
+                 "type":"filesystem",
+                 "params":{
+                   "directory_path":"./train_result/tmp/spill",
+                   "buffer_size":1000000,
+                 },
+               }
+             )
+           },
+           )
 
   if(config.path != ''):
     config.bgr_img = cv2.imread(config.path)
