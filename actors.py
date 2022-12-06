@@ -14,7 +14,7 @@ import random
 import os
 
 
-@ray.remote(num_gpus=0.25)
+@ray.remote(num_gpus=0.125)
 class Actor(Logger):
 
   def __init__(self, actor_key, config, storage, replay_buffer, state=None):
@@ -71,8 +71,12 @@ class Actor(Logger):
     self.length_to_log = 0
     self.value_to_log = {'avg': 0, 'max': 0}
 
-    if state is not None:
-      self.load_state(state)
+    # if state is not None:
+    #   self.load_state(state)
+
+    state = torch.load('./runs/Curling/110/6layer/saves/best_history_network/' + '39000')
+    self.load_state(state)
+    print(f'actor {self.actor_key} load state success')
 
     Logger.__init__(self)
 
@@ -80,7 +84,7 @@ class Actor(Logger):
     self.run_tag = os.path.join(self.run_tag, 'resumed', '{}'.format(state['training_step']))
     self.network.load_state_dict(state['weights'])
     self.training_step = state['training_step']
-    self.games_played = state['actor_games'][self.actor_key]
+    # self.games_played = state['actor_games'][self.actor_key]
 
   def sync_weights(self, force=False):
     weights, training_step = ray.get(self.storage.get_weights.remote(self.games_played, self.actor_key))

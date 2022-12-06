@@ -1,0 +1,294 @@
+[Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[Simulation] 单次shot最长仿真时间=200.00s
+[Taichi] Starting on arch=x64
+2022-12-04 23:44:35,311	INFO worker.py:1528 -- Started a local Ray instance.
+[Gym] gym环境: 两个智能体对打 v0 版本 
+
+[92mStarting date: 04-Dec-2022_16-44-33[0m
+Using environment: Curling.
+Using architecture: MuZeroNetwork.
+Using replay memory with max capacity: 100000.
+   - 5000 stored before learner starts.
+Using optimizer: AdamW.
+   - initial lr: 0.001.
+   - weight decay: 0.0001,
+Using lr scheduler: SteadyExpLR,
+Using target transform.
+Using CrossEntropyLoss as policy loss.
+Using value support between -15 and 15.
+Using reward support between -15 and 15.
+Using CrossEntropyLoss as value and reward loss.
+Using batch size 128.
+Using discount 1.0.
+Using 150 simulations per step.
+Using td-steps 10.
+Using 10 actors.
+   - with fixed temperatures: [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]
+[92mLaunching...[0m
+
+[2m[36m(pid=3889823)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889830)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889828)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889825)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889828)[0m [I 12/04/22 23:44:39.986 3889828] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889832)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889829)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889827)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889822)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889833)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889823)[0m [I 12/04/22 23:44:40.053 3889823] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889830)[0m [I 12/04/22 23:44:40.040 3889830] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889836)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889831)[0m [Taichi] version 1.0.4, llvm 10.0.0, commit 2827db2c, linux, python 3.6.13
+[2m[36m(pid=3889825)[0m [I 12/04/22 23:44:40.111 3889825] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889832)[0m [I 12/04/22 23:44:40.193 3889832] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889829)[0m [I 12/04/22 23:44:40.156 3889829] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889827)[0m [I 12/04/22 23:44:40.142 3889827] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889822)[0m [I 12/04/22 23:44:40.187 3889822] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889833)[0m [I 12/04/22 23:44:40.163 3889833] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889831)[0m [I 12/04/22 23:44:40.212 3889831] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889836)[0m [I 12/04/22 23:44:40.244 3889836] [shell.py:_shell_pop_print@33] Graphical python shell detected, using wrapped sys.stdout
+[2m[36m(pid=3889828)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889828)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889828)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889823)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889823)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889823)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889830)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889830)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889830)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889829)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889829)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889829)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889827)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889827)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889827)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889822)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889822)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889822)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889833)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889833)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889833)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889825)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889825)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889825)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889832)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889832)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889832)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889831)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889831)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889831)[0m [Taichi] Starting on arch=x64
+[2m[36m(pid=3889836)[0m [Simulation] 当前 dt=0.01s, 请注意精度和速度的平衡!
+[2m[36m(pid=3889836)[0m [Simulation] 单次shot最长仿真时间=200.00s
+[2m[36m(pid=3889836)[0m [Taichi] Starting on arch=x64
+[2m[36m(Actor pid=3889828)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889823)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889830)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889828)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889829)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889823)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889830)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889825)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889832)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889827)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889822)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889833)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889833)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889831)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889825)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889829)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889827)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889822)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889832)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Learner pid=3889836)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+[2m[36m(Actor pid=3889831)[0m [Gym] gym环境: 两个智能体对打 v0 版本 
+Traceback (most recent call last):
+  File "train.py", line 157, in <module>
+    launch(config, date)
+  File "train.py", line 97, in launch
+    ray.get([worker.launch.remote() for worker in workers])
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/ray/_private/client_mode_hook.py", line 105, in wrapper
+    return func(*args, **kwargs)
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/ray/_private/worker.py", line 2291, in get
+    raise value
+ray.exceptions.RayActorError: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889828, ip=192.168.2.48, repr=<actors.Actor object at 0x7f5fadd7b978>)
+  File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+    self.network = get_network(config, self.device)
+  File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+    network = MuZeroNetwork(input_channels, action_space, device, config)
+  File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+    self.to(device)
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+    return self._apply(convert)
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+    module._apply(fn)
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+    module._apply(fn)
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+    param_applied = fn(param)
+  File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+    return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+RuntimeError: CUDA error: out of memory
+CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889828)[0m 2022-12-04 23:44:49,737	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889828, ip=192.168.2.48, repr=<actors.Actor object at 0x7f5fadd7b978>)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889828)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889828)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889828)[0m     self.to(device)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889828)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889828)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889828)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889828)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889828)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889828)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889828)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889828)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889828)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889823)[0m 2022-12-04 23:44:49,784	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889823, ip=192.168.2.48, repr=<actors.Actor object at 0x7f026d226978>)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889823)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889823)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889823)[0m     self.to(device)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889823)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889823)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889823)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889823)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889823)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889823)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889823)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889823)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889823)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889830)[0m 2022-12-04 23:44:49,747	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889830, ip=192.168.2.48, repr=<actors.Actor object at 0x7f7e400859e8>)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889830)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889830)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889830)[0m     self.to(device)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889830)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889830)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889830)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889830)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889830)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889830)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889830)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889830)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889830)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889827)[0m 2022-12-04 23:44:49,756	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889827, ip=192.168.2.48, repr=<actors.Actor object at 0x7ef8c34d59e8>)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889827)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889827)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889827)[0m     self.to(device)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889827)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889827)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889827)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889827)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889827)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889827)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889827)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889827)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889827)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889822)[0m 2022-12-04 23:44:49,742	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889822, ip=192.168.2.48, repr=<actors.Actor object at 0x7f259aa299e8>)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889822)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889822)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889822)[0m     self.to(device)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889822)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889822)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889822)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889822)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889822)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889822)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889822)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889822)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889822)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889829)[0m 2022-12-04 23:44:49,743	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889829, ip=192.168.2.48, repr=<actors.Actor object at 0x7ff3e36219b0>)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889829)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889829)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889829)[0m     self.to(device)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889829)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889829)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889829)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889829)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889829)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889829)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889829)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889829)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889829)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889825)[0m 2022-12-04 23:44:49,750	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889825, ip=192.168.2.48, repr=<actors.Actor object at 0x7f54f4f3e9e8>)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889825)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889825)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889825)[0m     self.to(device)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889825)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889825)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889825)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889825)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889825)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889825)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889825)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889825)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889825)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.
+[2m[36m(Actor pid=3889831)[0m 2022-12-04 23:44:49,772	ERROR worker.py:763 -- Exception raised in creation task: The actor died because of an error raised in its creation task, [36mray::Actor.__init__()[39m (pid=3889831, ip=192.168.2.48, repr=<actors.Actor object at 0x7ef619cc19e8>)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/actors.py", line 49, in __init__
+[2m[36m(Actor pid=3889831)[0m     self.network = get_network(config, self.device)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/utils.py", line 40, in get_network
+[2m[36m(Actor pid=3889831)[0m     network = MuZeroNetwork(input_channels, action_space, device, config)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/Documents/GitHub/model-based-rl/networks.py", line 576, in __init__
+[2m[36m(Actor pid=3889831)[0m     self.to(device)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 899, in to
+[2m[36m(Actor pid=3889831)[0m     return self._apply(convert)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889831)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 570, in _apply
+[2m[36m(Actor pid=3889831)[0m     module._apply(fn)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 593, in _apply
+[2m[36m(Actor pid=3889831)[0m     param_applied = fn(param)
+[2m[36m(Actor pid=3889831)[0m   File "/home/fyq/anaconda3/envs/pytorch/lib/python3.6/site-packages/torch/nn/modules/module.py", line 897, in convert
+[2m[36m(Actor pid=3889831)[0m     return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+[2m[36m(Actor pid=3889831)[0m RuntimeError: CUDA error: out of memory
+[2m[36m(Actor pid=3889831)[0m CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
+[2m[36m(Actor pid=3889831)[0m For debugging consider passing CUDA_LAUNCH_BLOCKING=1.

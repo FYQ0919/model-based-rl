@@ -216,7 +216,7 @@ class Evaluator(SummaryTools):
 
         if self.config.use_gpu:
             if torch.cuda.is_available():
-                self.device = torch.device("cuda")
+                self.device = torch.device("cuda:3")
             else:
                 raise RuntimeError("GPU was requested but torch.cuda.is_available() is False.")
         else:
@@ -243,6 +243,7 @@ class Evaluator(SummaryTools):
     def play_game(self, environment):
         assert self.network is not None, ".load_network() needs to be called before playing."
         game = self.config.new_game(environment)
+        game.environment.reset(render=True)
 
         if self.config.save_mcts:
             path_to_mcts_folder = os.path.split(os.path.normpath(self.config.saves_dir))[0]
@@ -419,7 +420,7 @@ def get_label(state, detailed=False, path_idx=None):
 def state_generator(args):
     for path_idx, saves_dir in enumerate(args.saves_dir):
         for net in args.nets:
-            meta_state = torch.load(saves_dir + net, map_location=torch.device('cpu'))
+            meta_state = torch.load(saves_dir + net, map_location=torch.device('cuda:3'))
             for temperature in args.temperatures:
                 for num_simulations in args.num_simulations:
                     for only_prior in args.only_prior:

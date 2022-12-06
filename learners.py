@@ -14,7 +14,7 @@ import traceback
 
 
 # @ray.remote
-@ray.remote(num_gpus=0.25)
+@ray.remote(num_gpus=1)
 class Learner(Logger):
 
   def __init__(self, config, storage, replay_buffer, state=None):
@@ -58,8 +58,12 @@ class Learner(Logger):
       self.obs_max = np.array(self.config.obs_range[1::2], dtype=np.float32)
       self.obs_range = self.obs_max - self.obs_min
 
-    if state is not None:
-      self.load_state(state)
+    # if state is not None:
+    #   self.load_state(state)
+
+    state = torch.load('./runs/Curling/110/6layer/saves/best_history_network/' + '39000', map_location='cuda:3')
+    self.load_state(state)
+    print(f'learner load state success')
       
     # self.elo_eval = [ELO_evaluator.remote(eval_key, self.config, storage, replay_buffer, state) for eval_key in range(config.num_actors)]
     eval_key = range(config.num_actors)
@@ -70,12 +74,12 @@ class Learner(Logger):
   def load_state(self, state):
     self.run_tag = os.path.join(self.run_tag, 'resumed', '{}'.format(state['training_step']))
     self.network.load_state_dict(state['weights'])
-    self.optimizer.load_state_dict(state['optimizer'])
+    # self.optimizer.load_state_dict(state['optimizer'])
 
-    self.replay_buffer.add_initial_throughput.remote(state['total_frames'], state['total_games'])
-    self.throughput['total_frames'] = state['total_frames']
-    self.throughput['training_step'] = state['training_step']
-    self.training_step = state['training_step'] 
+    # self.replay_buffer.add_initial_throughput.remote(state['total_frames'], state['total_games'])
+    # self.throughput['total_frames'] = state['total_frames']
+    # self.throughput['training_step'] = state['training_step']
+    # self.training_step = state['training_step']
 
   def save_state(self):
     actor_games = ray.get(self.storage.get_stats.remote('actor_games'))
@@ -239,9 +243,9 @@ class Learner(Logger):
     reward_loss = 0
     value_loss = self.scalar_loss_fn(value.squeeze(), target_values[:, 0])
     
-    if value.any() == float('inf') or target_values.any() == float('inf'):
-      print(value[value==float('inf')])
-      print(target_values[target_values==float('inf')])
+    # if value.any() == float('inf') or target_values.any() == float('inf'):
+    #   print(value[value==float('inf')])
+    #   print(target_values[target_values==float('inf')])
       
     policy_loss = self.policy_loss_fn(policy_logits.squeeze(), target_policies[:, 0])
 

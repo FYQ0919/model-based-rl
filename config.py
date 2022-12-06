@@ -171,7 +171,7 @@ def make_config():
   training.add_argument('--num_unroll_steps', nargs='+', type=int, default=[5])
   training.add_argument('--send_weights_frequency', type=int, default=1000)
   training.add_argument('--weight_sync_frequency', type=int, default=50)
-  training.add_argument('--td_steps', nargs='+', type=int, default=[20])
+  training.add_argument('--td_steps', nargs='+', type=int, default=[24])
   training.add_argument('--batch_size', nargs='+', type=int, default=[256])
   training.add_argument('--batches_per_fetch', type=int, default=15)
   training.add_argument('--stored_before_train', type=int, default=10)
@@ -180,7 +180,7 @@ def make_config():
   training.add_argument('--discount', nargs='+', type=float, default=[1.0])
   training.add_argument('--use_gpu_for', nargs='+', choices=['actors', 'learner'], type=str, default=['actors', 'learner'])
   training.add_argument('--learner_gpu_device_id', type=int, default=3)
-  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[1,1,1,1,2,2,2,2,3,3])
+  training.add_argument('--actors_gpu_device_ids', nargs='+', type=int, default=[0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2])
 
   ### Sampled Muzero
   training.add_argument('--num_sample_action', type=int, default=120)
@@ -191,11 +191,11 @@ def make_config():
   training.add_argument('--weight_decay', type=float, default=1e-4)
 
   # Learning rate
-  training.add_argument('--lr_init', nargs='+', type=float, default=[0.01])
+  training.add_argument('--lr_init', nargs='+', type=float, default=[0.001])
   training.add_argument('--lr_scheduler', choices=['ExponentialLR', 'MuZeroLR', 'WarmUpLR', 'SteadyExpLR'], type=str, default='SteadyExpLR')
-  training.add_argument('--lr_decay_rate', type=float, default=0.5)
+  training.add_argument('--lr_decay_rate', type=float, default=0.9)
   training.add_argument('--lr_decay_steps', type=int, default=10000)
-  training.add_argument('--lr_steady_steps', type=int, default=20000)
+  training.add_argument('--lr_steady_steps', type=int, default=50000)
 
   ### Saving and Loading
   load_and_save = parser.add_argument_group('saving and loading')
